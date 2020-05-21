@@ -43,6 +43,35 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 	return &Local{Base: Base{Name: name}, Path: path, GitDir: gitDir}, nil
 }
 
+func (repo *Local) CreatePatchBetweenVirtualCommits(v1FromCommit, v1IntoCommit, v2FromCommit, v2IntoCommit string) (string, error) {
+	repository, err := git.PlainOpen(repo.Path)
+	if err != nil {
+		return "", fmt.Errorf("cannot open repo at %s: %s", repo.Path, err)
+	}
+	commitHash, err := newHash(v1IntoCommit)
+	if err != nil {
+		return "", fmt.Errorf("bad commit hash %s: %s", v1IntoCommit, err)
+	}
+	v1IntoCommitObj, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return "", fmt.Errorf("bad commit %s: %s", v1IntoCommit, err)
+	}
+	hasSubmodules, err := HasSubmodulesInCommit(v1IntoCommitObj)
+	if err != nil {
+		return "", err
+	}
+
+	if v1MergeCommit, err := true_git.CreateTemporaryMergeCommit(repo.GitDir, repo.getRepoWorkTreeCacheDir(), v1FromCommit, v1IntoCommit, true_git.CreateTemporaryMergeCommitOptions{HasSubmodules: hasSubmodules}); err != nil {
+		return "", fmt.Errorf("unable to create virtual merge commit %s into %s: %s", v1FromCommit, v1IntoCommit, err)
+	} else if v2MergeCommit, err := true_git.CreateTemporaryMergeCommit(repo.GitDir, repo.getRepoWorkTreeCacheDir(), v2FromCommit, v2IntoCommit, true_git.CreateTemporaryMergeCommitOptions{HasSubmodules: hasSubmodules}); err != nil {
+		return "", fmt.Errorf("unable to create virtual merge commit %s into %s: %s", v2FromCommit, v2IntoCommit, err)
+	} else {
+		fmt.Printf("v1MergeCommit: %v\nv2MergeCommit: %v\n", v1MergeCommit, v2MergeCommit)
+	}
+
+	return "", nil
+}
+
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
 	repository, err := git.PlainOpen(repo.Path)
 	if err != nil {
