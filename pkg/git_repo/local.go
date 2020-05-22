@@ -66,7 +66,7 @@ func (repo *Local) CreatePatchBetweenVirtualCommits(v1FromCommit, v1IntoCommit, 
 	} else if v2MergeCommit, err := true_git.CreateTemporaryMergeCommit(repo.GitDir, repo.getRepoWorkTreeCacheDir(), v2FromCommit, v2IntoCommit, true_git.CreateTemporaryMergeCommitOptions{HasSubmodules: hasSubmodules}); err != nil {
 		return "", fmt.Errorf("unable to create virtual merge commit %s into %s: %s", v2FromCommit, v2IntoCommit, err)
 	} else {
-		fmt.Printf("v1MergeCommit: %v\nv2MergeCommit: %v\n", v1MergeCommit, v2MergeCommit)
+		fmt.Printf("v1MergeCommit: %q\nv2MergeCommit: %q\n", v1MergeCommit, v2MergeCommit)
 	}
 
 	return "", nil

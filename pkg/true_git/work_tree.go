@@ -169,14 +169,25 @@ func debugWorktreeSwitch() bool {
 
 func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules bool) error {
 	var err error
-
-	err = os.MkdirAll(workTreeDir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to create work tree dir %s: %s", workTreeDir, err)
-	}
-
 	var cmd *exec.Cmd
 	var output *bytes.Buffer
+
+	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
+		cmd = exec.Command(
+			"git", "--git-dir", repoDir,
+			"worktree", "add", "--detach", "--no-checkout",
+		)
+		output = setCommandRecordingLiveOutput(cmd)
+		if debugWorktreeSwitch() {
+			fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
+		}
+		err = cmd.Run()
+		if err != nil {
+			return fmt.Errorf("git worktree add failed: %s\n%s", err, output.String())
+		}
+	} else if err != nil {
+		return fmt.Errorf("error accessing %s: %s", workTreeDir, err)
+	}
 
 	cmd = exec.Command(
 		"git", "-c", "core.autocrlf=false", "--git-dir", repoDir, "--work-tree", workTreeDir,
