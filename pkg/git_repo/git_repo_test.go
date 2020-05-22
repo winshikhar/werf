@@ -69,6 +69,29 @@ var _ = Describe("GitRepo", func() {
 			Expect(utils.SetGitRepoState("git_repo_test/003-base2", "git_repo_test/repo", "base2")).To(Succeed())
 			base2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "rev-parse", "HEAD")
 
+			utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "checkout", "change")
+			Expect(utils.SetGitRepoState("git_repo_test/004-change2", "git_repo_test/repo", "change2")).To(Succeed())
+			change2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/004-change2", "rev-parse", "HEAD")
+
+			//Expect(copy.Copy("git_repo_test/001-base1", "git_repo_test/worktree")).To(Succeed())
+			//Expect(utils.SetGitRepoState("git_repo_test/worktree", "git_repo_test/repo", "base1")).To(Succeed())
+			//base1Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/worktree", "rev-parse", "HEAD")
+			//
+			//utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/worktree", "checkout", "-b", "change")
+			//Expect(os.RemoveAll("git_repo_test/worktree")).To(Succeed())
+			//Expect(copy.Copy("git_repo_test/002-change1", "git_repo_test/worktree")).To(Succeed())
+			//Expect(utils.SetGitRepoState("git_repo_test/worktree", "git_repo_test/repo", "change1")).To(Succeed())
+			//change1Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/worktree", "rev-parse", "HEAD")
+			//
+			//utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/worktree", "checkout", "master")
+			//Expect(os.RemoveAll("git_repo_test/worktree")).To(Succeed())
+			//Expect(copy.Copy("git_repo_test/003-base2", "git_repo_test/worktree")).To(Succeed())
+			//Expect(utils.SetGitRepoState("git_repo_test/worktree", "git_repo_test/repo", "base2")).To(Succeed())
+			//base2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/worktree", "rev-parse", "HEAD")
+			//
+			//Expect(utils.SetGitRepoState("git_repo_test/003-base2", "git_repo_test/repo", "base2")).To(Succeed())
+			//base2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "rev-parse", "HEAD")
+
 			//utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "checkout", "change")
 			//Expect(utils.SetGitRepoState("git_repo_test/004-change2", "git_repo_test/repo", "change2")).To(Succeed())
 			//change2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/004-change2", "rev-parse", "HEAD")
@@ -76,7 +99,7 @@ var _ = Describe("GitRepo", func() {
 			_ = base1Commit
 			_ = change1Commit
 			_ = base2Commit
-			//_ = change2Commit
+			_ = change2Commit
 
 			//if patch, err := GetPatchBetweenVirtualMergeCommits("git_repo_test/004-change2", change1Commit, base1Commit, change2Commit, base2Commit); err != nil {
 			//	Expect(err).NotTo(HaveOccurred())
