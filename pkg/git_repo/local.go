@@ -44,24 +44,7 @@ func OpenLocalRepo(name string, path string) (*Local, error) {
 }
 
 func (repo *Local) CreateVirtualMergeCommit(fromCommit, toCommit string) (string, error) {
-	repository, err := git.PlainOpen(repo.Path)
-	if err != nil {
-		return "", fmt.Errorf("cannot open repo at %s: %s", repo.Path, err)
-	}
-	commitHash, err := newHash(toCommit)
-	if err != nil {
-		return "", fmt.Errorf("bad commit hash %s: %s", toCommit, err)
-	}
-	v1MergeIntoCommitObj, err := repository.CommitObject(commitHash)
-	if err != nil {
-		return "", fmt.Errorf("bad commit %s: %s", toCommit, err)
-	}
-	hasSubmodules, err := HasSubmodulesInCommit(v1MergeIntoCommitObj)
-	if err != nil {
-		return "", err
-	}
-
-	return true_git.CreateTemporaryMergeCommit(repo.GitDir, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit, true_git.CreateTemporaryMergeCommitOptions{HasSubmodules: hasSubmodules})
+	return repo.createVirtualMergeCommit(repo.GitDir, repo.Path, repo.getRepoWorkTreeCacheDir(), fromCommit, toCommit)
 }
 
 func (repo *Local) LsTree(pathMatcher path_matcher.PathMatcher) (*ls_tree.Result, error) {
