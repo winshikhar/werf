@@ -33,7 +33,7 @@ func GetPatchBetweenVirtualMergeCommits(workTreeDir string, v1FromCommit, v1Into
 				return "", fmt.Errorf("unable to create patch between %s and %s: %s", v1Commit, v2Commit, err)
 			} else {
 				if data, err := ioutil.ReadFile(patch.GetFilePath()); err != nil {
-					return "", fmt.Errorf("error reading %s: %s", err)
+					return "", fmt.Errorf("error reading %s: %s", patch.GetFilePath(), err)
 				} else {
 					return string(data), nil
 				}
@@ -50,32 +50,40 @@ var _ = Describe("GitRepo", func() {
 
 	Context("", func() {
 		AfterEach(func() {
+			//os.RemoveAll("git_repo_test/repo")
+			//os.RemoveAll("git_repo_test/001-base1/.git")
+			//os.RemoveAll("git_repo_test/002-change1/.git")
+			//os.RemoveAll("git_repo_test/003-base2/.git")
+			//os.RemoveAll("git_repo_test/004-change2/.git")
 		})
 
 		It("should successfully build image using arbitrary ansible modules", func() {
-			//Expect(werfBuild("general", liveexec.ExecCommandOptions{})).To(Succeed())
-
 			Expect(utils.SetGitRepoState("git_repo_test/001-base1", "git_repo_test/repo", "base1")).To(Succeed())
-			base1Commit := utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/001-base1", "rev-parse", "HEAD")
+			base1Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/001-base1", "rev-parse", "HEAD")
 
-			utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/001-base1", "checkout", "-b", "change")
+			utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/001-base1", "checkout", "-b", "change")
 			Expect(utils.SetGitRepoState("git_repo_test/002-change1", "git_repo_test/repo", "change1")).To(Succeed())
-			change1Commit := utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/002-change1", "rev-parse", "HEAD")
+			change1Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/002-change1", "rev-parse", "HEAD")
+			//
+			//utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/002-change1", "checkout", "master")
+			//Expect(utils.SetGitRepoState("git_repo_test/003-base2", "git_repo_test/repo", "base2")).To(Succeed())
+			//base2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "rev-parse", "HEAD")
+			//
+			//utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/003-base2", "checkout", "change")
+			//Expect(utils.SetGitRepoState("git_repo_test/004-change2", "git_repo_test/repo", "change2")).To(Succeed())
+			//change2Commit := utils.SucceedCommandOutputString(".", "git", "-C", "git_repo_test/004-change2", "rev-parse", "HEAD")
 
-			utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/002-change1", "checkout", "master")
-			Expect(utils.SetGitRepoState("git_repo_test/003-base2", "git_repo_test/repo", "base2")).To(Succeed())
-			base2Commit := utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/003-base2", "rev-parse", "HEAD")
+			_ = base1Commit
+			_ = change1Commit
+			//_ = change2Commit
+			//_ = base2Commit
 
-			utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/003-base2", "checkout", "change")
-			Expect(utils.SetGitRepoState("git_repo_test/004-change2", "git_repo_test/repo", "change2")).To(Succeed())
-			change2Commit := utils.SucceedCommandOutputString("git", "--work-tree", "git_repo_test/004-change2", "rev-parse", "HEAD")
-
-			if patch, err := GetPatchBetweenVirtualMergeCommits("git_repo_test/004-change2", change1Commit, base1Commit, change2Commit, base2Commit); err != nil {
-				Expect(err).NotTo(HaveOccurred())
-			} else {
-				Expect(patch).To(Equal(`
-`))
-			}
+			//if patch, err := GetPatchBetweenVirtualMergeCommits("git_repo_test/004-change2", change1Commit, base1Commit, change2Commit, base2Commit); err != nil {
+			//	Expect(err).NotTo(HaveOccurred())
+			//} else {
+			//	_ = patch
+			//	Expect("").To(Equal(``))
+			//}
 		})
 	})
 })
