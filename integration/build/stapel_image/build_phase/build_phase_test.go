@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/flant/werf/pkg/testing/utils"
+
 	"github.com/flant/werf/pkg/testing/utils/liveexec"
 	"github.com/otiai10/copy"
 
@@ -63,9 +65,9 @@ var _ = Describe("Build phase", func() {
 		})
 
 		It("should build install stage twice (because of ancestry check) and use the oldest stage by time of saving into stages storage", func() {
-			Expect(setGitRepoState("build_phase-001", "build_phase_repo1", "one")).To(Succeed())
+			Expect(utils.SetGitRepoState("build_phase-001", "build_phase_repo1", "one")).To(Succeed())
 			Expect(copy.Copy("build_phase_repo1", "build_phase_repo2")).To(Succeed())
-			Expect(setGitRepoState("build_phase-002", "build_phase_repo2", "two")).To(Succeed())
+			Expect(utils.SetGitRepoState("build_phase-002", "build_phase_repo2", "two")).To(Succeed())
 
 			Expect(werfBuild("build_phase-001", liveexec.ExecCommandOptions{})).To(Succeed())
 
