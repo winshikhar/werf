@@ -69,7 +69,6 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 	}
 
 	commonGitOpts := []string{
-		"--git-dir", gitDir,
 		"-c", "diff.renames=false",
 		"-c", "core.quotePath=false",
 	}
@@ -108,6 +107,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
+		gitArgs := append(commonGitOpts, "--git-dir", gitDir)
 		gitArgs := append(commonGitOpts, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
