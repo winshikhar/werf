@@ -94,8 +94,7 @@ func writePatch(out io.Writer, gitDir, workTreeCacheDir string, withSubmodules b
 			return nil, fmt.Errorf("cannot prepare work tree in cache %s for commit %s: %s", workTreeCacheDir, opts.ToCommit, err)
 		}
 
-		gitArgs := append(commonGitOpts, "--work-tree", workTreeDir)
-		gitArgs = append(gitArgs, "diff")
+		gitArgs := append(commonGitOpts, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
 

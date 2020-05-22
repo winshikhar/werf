@@ -3,6 +3,7 @@ package true_git
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,7 +14,7 @@ type CreateTemporaryMergeCommitOptions struct {
 	HasSubmodules bool
 }
 
-func CreateTemporaryMergeCommit(gitDir, workTreeCacheDir, fromCommit, intoCommit string, opts CreateTemporaryMergeCommitOptions) (string, error) {
+func CreateTemporaryMergeCommit(gitDir, workTreeCacheDir, commitToMerge, mergeIntoCommit string, opts CreateTemporaryMergeCommitOptions) (string, error) {
 	var resCommit string
 
 	if err := withWorkTreeCacheLock(workTreeCacheDir, func() error {
@@ -36,17 +37,19 @@ func CreateTemporaryMergeCommit(gitDir, workTreeCacheDir, fromCommit, intoCommit
 			}
 		}
 
-		if workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, intoCommit, opts.HasSubmodules); err != nil {
-			return fmt.Errorf("unable to prepare worktree for commit %v: %s", intoCommit, err)
+		if workTreeDir, err := prepareWorkTree(gitDir, workTreeCacheDir, mergeIntoCommit, opts.HasSubmodules); err != nil {
+			return fmt.Errorf("unable to prepare worktree for commit %v: %s", mergeIntoCommit, err)
 		} else {
 			var err error
 			var cmd *exec.Cmd
 			var output *bytes.Buffer
 
-			cmd = exec.Command(
-				"git", "--git-dir", gitDir, "--work-tree", workTreeDir,
-				"merge", "--no-edit", "--no-ff", fromCommit,
-			)
+			currentCommitPath := filepath.Join(workTreeCacheDir, "current_commit")
+			if err := os.RemoveAll(currentCommitPath); err != nil {
+				return fmt.Errorf("unable to remove %s: %s", currentCommitPath, err)
+			}
+
+			cmd = exec.Command("git", "merge", "--no-edit", "--no-ff", commitToMerge)
 			cmd.Dir = workTreeDir
 			output = setCommandRecordingLiveOutput(cmd)
 			err = cmd.Run()
@@ -58,6 +61,7 @@ func CreateTemporaryMergeCommit(gitDir, workTreeCacheDir, fromCommit, intoCommit
 			}
 
 			cmd = exec.Command("git", "rev-parse", "HEAD")
+			cmd.Dir = workTreeDir
 			output = setCommandRecordingLiveOutput(cmd)
 			err = cmd.Run()
 			if err != nil {
@@ -68,6 +72,10 @@ func CreateTemporaryMergeCommit(gitDir, workTreeCacheDir, fromCommit, intoCommit
 			}
 
 			resCommit = strings.TrimSpace(output.String())
+
+			if err := ioutil.WriteFile(currentCommitPath, []byte(resCommit+"\n"), 0644); err != nil {
+				return fmt.Errorf("unable to write %s: %s", currentCommitPath, err)
+			}
 		}
 
 		return nil

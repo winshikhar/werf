@@ -15,7 +15,6 @@ func do(v1FromCommit, v1IntoCommit, v2FromCommit, v2IntoCommit string) error {
 	if gitRepo, err := git_repo.OpenLocalRepo("virtual_merge_commit", "."); err != nil {
 		return err
 	} else {
-
 		if patch, err := gitRepo.CreatePatchBetweenVirtualCommits(v1FromCommit, v1IntoCommit, v2FromCommit, v2IntoCommit); err != nil {
 			return err
 		} else {

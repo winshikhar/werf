@@ -175,7 +175,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	if _, err := os.Stat(workTreeDir); os.IsNotExist(err) {
 		cmd = exec.Command(
 			"git", "--git-dir", repoDir,
-			"worktree", "add", "--detach", "--no-checkout", workTreeDir,
+			"worktree", "add", "--force", "--detach", "--no-checkout", workTreeDir,
 		)
 		output = setCommandRecordingLiveOutput(cmd)
 		if debugWorktreeSwitch() {
@@ -190,9 +190,10 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	}
 
 	cmd = exec.Command(
-		"git", "-c", "core.autocrlf=false", "--work-tree", workTreeDir,
+		"git", "-c", "core.autocrlf=false",
 		"reset", "--hard", commit,
 	)
+	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
@@ -206,6 +207,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		"git", "--work-tree", workTreeDir,
 		"clean", "-d", "-f", "-f", "-x",
 	)
+	cmd.Dir = workTreeDir
 	output = setCommandRecordingLiveOutput(cmd)
 	if debugWorktreeSwitch() {
 		fmt.Printf("[DEBUG WORKTREE SWITCH] %s\n", strings.Join(append([]string{cmd.Path}, cmd.Args[1:]...), " "))
