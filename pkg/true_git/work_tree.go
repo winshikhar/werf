@@ -189,7 +189,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 	}
 
 	cmd = exec.Command(
-		"git", "--work-tree", workTreeDir,
+		"git", "-C", workTreeDir,
 		"clean", "-d", "-f", "-f", "-x",
 	)
 	cmd.Dir = workTreeDir
@@ -216,7 +216,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		}
 
 		cmd = exec.Command(
-			"git", "--work-tree", workTreeDir,
+			"git", "-C", workTreeDir,
 			"submodule", "foreach", "--recursive",
 			"git", "-c", "core.autocrlf=false", "reset", "--hard",
 		)
@@ -231,7 +231,7 @@ func switchWorkTree(repoDir, workTreeDir string, commit string, withSubmodules b
 		}
 
 		cmd = exec.Command(
-			"git", "--work-tree", workTreeDir,
+			"git", "-C", workTreeDir,
 			"submodule", "foreach", "--recursive",
 			"git", "clean", "-d", "-f", "-f", "-x",
 		)

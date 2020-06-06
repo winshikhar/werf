@@ -37,7 +37,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 
 	commitObj, err := repository.CommitObject(commitHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching commit object %s: %s", commit, err)
 	}
 
 	tree, err := commitObj.Tree()
@@ -56,7 +56,7 @@ func LsTree(repository *git.Repository, commit string, pathMatcher path_matcher.
 
 	worktreeNotInitializedSubmodulePaths, err := notInitializedSubmoduleFullFilepaths(repository, "", pathMatcher, strict)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error checking for uninitialized submodules: %s", err)
 	}
 	res.notInitializedSubmoduleFullFilepaths = worktreeNotInitializedSubmodulePaths
 
@@ -351,7 +351,18 @@ func notInitializedSubmoduleFullFilepaths(repository *git.Repository, repository
 	for _, submodule := range submodules {
 		submoduleEntryFilepath := filepath.FromSlash(submodule.Config().Path)
 		submoduleFullFilepath := filepath.Join(repositoryFullFilepath, submoduleEntryFilepath)
+		fmt.Printf("!!! repositoryFullFilepath=%v\n", repositoryFullFilepath)
+		fmt.Printf("!!! submoduleFullFilepath=%v\n", submoduleFullFilepath)
 		isMatched, shouldGoThrough := pathMatcher.ProcessDirOrSubmodulePath(submoduleFullFilepath)
+
+		status, err := submodule.Status()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get status of submodule %s: %s", submodule.Config().Path, err)
+		}
+		logboek.Debug.LogF("Checking submodule: %s %s %s\n", submodule.Config().Name, submodule.Config().URL, status.String())
+		logboek.Debug.LogF("Status IsClean: %v\n", status.IsClean())
+		logboek.Debug.LogF("Status Path: %v\n", status.Path)
+
 		if isMatched || shouldGoThrough {
 			submoduleRepository, err := submodule.Repository()
 			if err != nil {
