@@ -64,9 +64,9 @@ jobs:
         run: |
           cd docs
           bundle exec htmlproofer \
-          --allow-hash-href \
-          --empty-alt-ignore \
-          --check_html \
-          --url_ignore "/localhost/,/atseashop.com/,/https\:\/\/t.me/,/.slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.ru/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/" \
-          --url_swap  "https\://ru.werf.io:,https\://werf.io:" \
-          ./_site/
+            --allow-hash-href \
+            --empty-alt-ignore \
+            --check_html \
+            --url_ignore "/localhost/,/bintray.com/,/t.me/,/slack.com/,/cncf.io/,/\/feed.*\.xml/,/habr.com/,/flant.(ru)|(com)/,/twitter.com/,/example.com/,/dothings.sh/,/172.17.0.3/,/applications_guide_ru/,/werf_yaml.html#configuring-cleanup-policies/" \
+            --url_swap  "https\://werf.io:,https\://ru.werf.io:"  \
+            ./_site/
