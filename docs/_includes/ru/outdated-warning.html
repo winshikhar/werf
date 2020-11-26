@@ -1,4 +1,6 @@
-<div id="outdatedWarning" class="docs__outdated">
-    Вы смотрите документацию по устаревшей версии werf.<br/>
-    Для просмотра актуальной версии перейдите на <a data-proofer-ignore href="{{ site.site_urls.ru }}/documentation/">главную страницу</a>.
+{%- if jekyll.environment == "production" %}
+<div id="outdatedWarning" class="docs__outdated {% if site.baseurl %}active{% endif %}">
+    Вы смотрите документацию устаревшей версии werf.<br/>
+    Для просмотра актуальной версии перейдите в <a data-proofer-ignore href="/documentation/">соответствующий раздел</a>.
 </div>
+{%- endif %}

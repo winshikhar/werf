@@ -1,4 +1,6 @@
-<div id="outdatedWarning" class="docs__outdated">
+{%- if jekyll.environment == "production" %}
+<div id="outdatedWarning" class="docs__outdated {% if site.baseurl %}active{% endif %}">
     You are viewing the documentation for an outdated version of werf.<br/>
-    For up-to-date documentation, please see the <a data-proofer-ignore href="{{ site.site_urls.en }}/documentation/">most stable</a> version.
+    For up-to-date documentation, please see the <a data-proofer-ignore href="/documentation/">most stable</a> version.
 </div>
+{%- endif %}
