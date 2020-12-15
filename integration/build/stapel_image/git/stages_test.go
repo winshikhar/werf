@@ -562,11 +562,11 @@ func addAndCommitFile(dirPath string, filename string, commitMsg string) {
 		"add", filename,
 	)
 
-	utils.RunSucceedCommand(
-		dirPath,
-		"git",
-		"commit", "-m", commitMsg,
-	)
+	//utils.RunSucceedCommand(
+	//	dirPath,
+	//	"git",
+	//	"commit", "-m", commitMsg,
+	//)
 }
 
 func filesChecksumCommand(path string) string {

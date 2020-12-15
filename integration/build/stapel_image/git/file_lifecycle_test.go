@@ -100,6 +100,9 @@ var _ = Describe("file lifecycle", func() {
 	}
 
 	BeforeEach(func() {
+		stubs.SetEnv("WERF_DEV", "1")
+		stubs.SetEnv("WERF_DEBUG_TRUE_GIT", "1")
+		stubs.SetEnv("DOCKER_BUILDKIT", "0")
 		fixturesPathParts = []string{"file_lifecycle"}
 		commonBeforeEach(testDirPath, utils.FixturePath(fixturesPathParts...))
 	})
