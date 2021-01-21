@@ -41,7 +41,7 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 			continue
 		}
 
-		return r.readConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
+		return r.checkAndReadConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
 		})
 	}

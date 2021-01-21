@@ -34,7 +34,7 @@ func (r FileReader) ConfigGoTemplateFilesGet(ctx context.Context, relPath string
 		return nil, fmt.Errorf("{{ .Files.Get '%s' }}: %s", relPath, err)
 	}
 
-	data, err := r.readConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted)
+	data, err := r.checkAndReadConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted)
 	if err != nil {
 		return nil, fmt.Errorf("{{ .Files.Get '%s' }}: %s", relPath, err)
 	}
