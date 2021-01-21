@@ -287,7 +287,7 @@ func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]b
 	return repo.getCommitTreeEntryContent(ctx, commit, resolvedPath)
 }
 
-// IsCommitFileExist returns true if the commit tree entry is Regular, Deprecated, Executable, or Link.
+// IsCommitFileExist resolves symlinks and returns true if the resolved commit tree entry is Regular, Deprecated, Executable, or Link.
 func (repo *Local) IsCommitFileExist(ctx context.Context, commit, path string) (bool, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
@@ -306,7 +306,7 @@ func (repo *Local) IsCommitFileExist(ctx context.Context, commit, path string) (
 	return lsTreeEntry.Mode.IsFile(), nil
 }
 
-// IsCommitDirectoryExist returns true if the commit tree entry is Dir or Submodule.
+// IsCommitDirectoryExist resolves symlinks and returns true if the resolved commit tree entry is Dir or Submodule.
 func (repo *Local) IsCommitDirectoryExist(ctx context.Context, commit, path string) (bool, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
