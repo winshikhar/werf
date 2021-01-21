@@ -44,3 +44,7 @@ func (c *sharedContext) LocalGitRepo() *git_repo.Local {
 func (c *sharedContext) LooseGiterminism() bool {
 	return c.looseGiterminism
 }
+
+func (c *sharedContext) DevMode() bool {
+	return c.devMode
+}
