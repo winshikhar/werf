@@ -23,7 +23,7 @@ var _ = Describe("config templates dir", func() {
 		expectedErrSubstring         string
 	}
 
-	DescribeTable("allowUncommittedTemplates",
+	DescribeTable("config.allowUncommittedTemplates",
 		func(e entry) {
 			tmpl1RelPath := ".werf/templates/1.tmpl"
 			tmpl2RelPath := ".werf/templates/2.tmpl"
@@ -89,9 +89,9 @@ config:
 				}
 			}
 		},
-		Entry(".werf/templates/1.tmpl not found in commit", entry{
+		Entry(".werf/templates/1.tmpl not committed", entry{
 			addTemplate1:         true,
-			expectedErrSubstring: fmt.Sprintf("the uncommitted configuration found in the project directory: the werf config template '%s' must be committed", ".werf/templates/1.tmpl"),
+			expectedErrSubstring: fmt.Sprintf("unable to read werf config templates dir: the file '.werf/templates/1.tmpl' must be committed"),
 		}),
 		Entry(".werf/templates/1.tmpl committed", entry{
 			addTemplate1:    true,
@@ -101,7 +101,7 @@ config:
 			addTemplate1:               true,
 			commitTemplate1:            true,
 			changeTemplate1AfterCommit: true,
-			expectedErrSubstring:       "the uncommitted configuration found in the project directory: the werf config template '.werf/templates/1.tmpl' changes must be committed",
+			expectedErrSubstring:       "unable to read werf config templates dir: the file '.werf/templates/1.tmpl' changes must be committed",
 		}),
 		Entry("config.allowUncommittedTemplates has .werf/templates/1.tmpl, the template file not committed", entry{
 			allowUncommittedTemplate1: true,
@@ -117,7 +117,7 @@ config:
 			addTemplate1:              true,
 			addTemplate2:              true,
 			commitTemplate1:           true,
-			expectedErrSubstring:      "the uncommitted configuration found in the project directory: the werf config template '.werf/templates/2.tmpl' must be committed",
+			expectedErrSubstring:      "unable to read werf config templates dir: the file '.werf/templates/2.tmpl' must be committed",
 		}),
 		Entry("config.allowUncommittedTemplates has .werf/**/*.tmpl", entry{
 			allowUncommittedAllTemplates: true,
