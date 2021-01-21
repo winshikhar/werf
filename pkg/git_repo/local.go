@@ -374,14 +374,14 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
-			formattedLink := pathPkg.Clean(pathPkg.Join(pathPkg.Dir(pathToResolve), link))
-			if formattedLink == ".." || strings.HasPrefix(formattedLink, "../") {
+			resolvedLink := pathPkg.Clean(pathPkg.Join(pathPkg.Dir(pathToResolve), link))
+			if resolvedLink == ".." || strings.HasPrefix(resolvedLink, "../") {
 				return "", EntryNotFoundInRepoErr
 			}
 
 			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, link, depth, checkFunc)
 			if err != nil {
-				return "", fmt.Errorf("unable to resolve commit file path %s: %s", link, err)
+				return "", EntryNotFoundInRepoErr
 			}
 
 			resolvedPath = resolvedTarget
