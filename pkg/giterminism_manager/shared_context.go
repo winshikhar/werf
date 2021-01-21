@@ -1,6 +1,8 @@
 package giterminism_manager
 
-import "github.com/werf/werf/pkg/git_repo"
+import (
+	"github.com/werf/werf/pkg/git_repo"
+)
 
 type sharedContext struct {
 	projectDir       string
@@ -10,22 +12,35 @@ type sharedContext struct {
 	devMode          bool
 }
 
-func (s *sharedContext) ProjectDir() string {
-	return s.projectDir
+type NewSharedContextOptions struct {
+	looseGiterminism bool
+	devMode          bool
 }
 
-func (s *sharedContext) HeadCommit() string {
-	return s.headCommit
+func NewSharedContext(projectDir string, localGitRepo git_repo.Local, headCommit string, options NewSharedContextOptions) (*sharedContext, error) {
+	c := &sharedContext{
+		projectDir:       projectDir,
+		headCommit:       headCommit,
+		localGitRepo:     localGitRepo,
+		looseGiterminism: options.looseGiterminism,
+		devMode:          options.devMode,
+	}
+
+	return c, nil
 }
 
-func (s *sharedContext) LocalGitRepo() *git_repo.Local {
-	return &s.localGitRepo
+func (c *sharedContext) ProjectDir() string {
+	return c.projectDir
 }
 
-func (s *sharedContext) LooseGiterminism() bool {
-	return s.looseGiterminism
+func (c *sharedContext) HeadCommit() string {
+	return c.headCommit
 }
 
-func (s *sharedContext) DevMode() bool {
-	return s.devMode
+func (c *sharedContext) LocalGitRepo() *git_repo.Local {
+	return &c.localGitRepo
+}
+
+func (c *sharedContext) LooseGiterminism() bool {
+	return c.looseGiterminism
 }
