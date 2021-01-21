@@ -20,10 +20,18 @@ var ErrLocalRepositoryNotExists = git.ErrRepositoryNotExists
 
 type Local struct {
 	Base
-	Path   string
-	GitDir string
+
+	GitDir      string
+	WorkTreeDir string
 
 	headCommit string
+}
+
+type OpenLocalRepoOptions struct {
+	Dev bool
+
+	GitDir      string
+	WorkTreeDir string
 }
 
 func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
@@ -36,7 +44,7 @@ func OpenLocalRepo(name, path string, dev bool) (l Local, err error) {
 		return l, err
 	}
 
-	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, ".git"))
+	gitDir, err := true_git.GetRealRepoDir(filepath.Join(path, git.GitDirName))
 	if err != nil {
 		return l, fmt.Errorf("unable to get real git repo dir for %s: %s", path, err)
 	}

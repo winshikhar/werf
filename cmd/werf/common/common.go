@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/werf/werf/pkg/true_git"
 
 	"github.com/spf13/cobra"
 
@@ -31,6 +32,8 @@ import (
 )
 
 type CmdData struct {
+	GitDir             *string
+	WorkTree           *string
 	ProjectName        *string
 	Dir                *string
 	ConfigPath         *string
@@ -124,6 +127,16 @@ func SetupSetDockerConfigJsonValue(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.SetDockerConfigJsonValue, "set-docker-config-json-value", "", GetBoolEnvironmentDefaultFalse(os.Getenv("WERF_SET_DOCKER_CONFIG_VALUE")), "Shortcut to set current docker config into the .Values.dockerconfigjson")
 }
 
+func SetupGitDir(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GitDir = new(string)
+	cmd.Flags().StringVarP(cmdData.Dir, "git-dir", "", os.Getenv("WERF_GIT_DIR"), "Use specified .git directory as a project repository (default $WERF_GIT_DIR or lookup for .git in the current or parent directories)")
+}
+
+func SetupWorkTree(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.WorkTree = new(string)
+	cmd.Flags().StringVarP(cmdData.WorkTree, "work-tree", "", os.Getenv("WERF_WORK_TREE"), "Use specified git work tree dir (default $WERF_WORK_TREE or directory that contains .git)")
+}
+
 func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ProjectName = new(string)
 	cmd.Flags().StringVarP(cmdData.ProjectName, "project-name", "N", os.Getenv("WERF_PROJECT_NAME"), "Use custom project name (default $WERF_PROJECT_NAME)")
@@ -131,7 +144,7 @@ func SetupProjectName(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Dir = new(string)
-	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use custom working directory (default $WERF_DIR or current directory)")
+	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", os.Getenv("WERF_DIR"), "Use specified project directory where project's werf.yaml and other configuration files should reside (default $WERF_DIR or current working directory)")
 }
 
 func SetupConfigPath(cmdData *CmdData, cmd *cobra.Command) {
@@ -961,12 +974,17 @@ func GetWerfConfigOptions(cmdData *CmdData, LogRenderedFilePath bool) config.Wer
 }
 
 func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, error) {
-	projectDir, err := GetProjectDir(cmdData)
+	gitDir, err := GetGitDir(cmdData)
 	if err != nil {
 		return nil, err
 	}
 
-	localGitRepo, err := OpenLocalGitRepo(projectDir)
+	workTreeDir, err := GetWorkTreeDir(cmdData, gitDir)
+	if err != nil {
+		return nil, err
+	}
+
+	localGitRepo, err := OpenLocalGitRepo(gitDir)
 	if err != nil {
 		return nil, err
 	}
@@ -976,30 +994,57 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 		return nil, err
 	}
 
-	return giterminism_manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
+	return giterminism_manager.NewManager(BackgroundContext(), GetProjectDir(cmdData), localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 	})
 }
 
 func InitGiterminismInspector(cmdData *CmdData) error {
-	projectPath, err := GetProjectDir(cmdData)
-	if err != nil {
-		return fmt.Errorf("unable to get project directory: %s", err)
-	}
-
-	return giterminism_inspector.Init(projectPath, giterminism_inspector.InspectionOptions{
+	return giterminism_inspector.Init(GetProjectDir(cmdData), giterminism_inspector.InspectionOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
 		DevMode:          *cmdData.Dev,
 	})
 }
 
-//func GetRepoRootDir()
+func GetGitDir(cmdData *CmdData) (string, error) {
+	if *cmdData.GitDir != "" {
+		gitDir := *cmdData.GitDir
+		exist, err := util.DirExists(gitDir)
+		if err != nil {
+			return "", err
+		}
 
-// FIXME: project-dir is where werf.yaml for the project stored
-// FIXME: repo-dir is where .git has been found
-// FIXME: use werf.yaml from the project-dir by default, not repo-dir
-// FIXME: repo-dir is the root repo in the case when we are in the submodule(!)
-func GetProjectDir(cmdData *CmdData) (string, error) {
+		if !exist {
+			return "", fmt.Errorf("werf requires a git repository for the project to exist: specified git dir %q does not exist", gitDir)
+		}
+
+		return gitDir, err
+	}
+
+	if found, gitDir, err := true_git.UpwardLookupAndVerifyGitDir("."); err != nil {
+		return "", err
+	} else if found {
+		return gitDir, nil
+	}
+
+	return "", fmt.Errorf("werf requires a git repository for the project to exist: unable to find .git in the current directory %q or parent directories", util.GetAbsoluteFilepath("."))
+}
+
+func GetWorkTreeDir(cmdData *CmdData, gitDir string) (string, error) {
+	if *cmdData.WorkTree != "" {
+		return *cmdData.WorkTree, nil
+	}
+
+	if found, workTree, err := true_git.GetWorkTreeByGitDir(gitDir); err != nil {
+		return "", err
+	} else if found {
+		return workTree, nil
+	}
+
+	return "", fmt.Errorf("unable to determine git work tree for the project git dir %q: please specify --work-tree option (or WERF_WORK_TREE env var)")
+}
+
+func GetProjectDir(cmdData *CmdData) string {
 	var projectDir string
 	if *cmdData.Dir != "" {
 		projectDir = *cmdData.Dir
@@ -1007,25 +1052,7 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 		projectDir = "."
 	}
 
-	projectDir = util.GetAbsoluteFilepath(projectDir)
-	d := projectDir
-	for {
-		exist, err := util.DirExists(filepath.Join(d, ".git"))
-		if err != nil {
-			return "", err
-		}
-
-		if exist {
-			return d, nil
-		}
-
-		if d != filepath.Dir(d) {
-			d = filepath.Dir(d)
-			continue
-		}
-
-		return "", fmt.Errorf("werf requires a git repository for the project to exist: unable to find .git in the current directory %q or parent directories", projectDir)
-	}
+	return util.GetAbsoluteFilepath(projectDir)
 }
 
 func GetHelmChartDir(werfConfig *config.WerfConfig, projectDir string) (string, error) {
@@ -1294,8 +1321,8 @@ func SetupVirtualMergeIntoCommit(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.VirtualMergeIntoCommit, "virtual-merge-into-commit", "", os.Getenv("WERF_VIRTUAL_MERGE_INTO_COMMIT"), "Commit hash for virtual/ephemeral merge commit which is base for changes introduced in the pull request ($WERF_VIRTUAL_MERGE_INTO_COMMIT by default)")
 }
 
-func OpenLocalGitRepo(projectDir string) (git_repo.Local, error) {
-	return git_repo.OpenLocalRepo("own", projectDir, giterminism_inspector.DevMode)
+func OpenLocalGitRepo(path string) (git_repo.Local, error) {
+	return git_repo.OpenLocalRepo("own", path, giterminism_inspector.DevMode)
 }
 
 func BackgroundContext() context.Context {
