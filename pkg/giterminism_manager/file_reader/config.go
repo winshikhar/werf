@@ -33,34 +33,20 @@ func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byt
 	configRelPathList := r.configPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
-		if exist, err := r.isConfigExist(ctx, configPath); err != nil {
+		if exist, err := r.isConfigurationFileExist(ctx, configPath, func(_ string) (bool, error) {
+			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
+		}); err != nil {
 			return nil, err
 		} else if !exist {
 			continue
 		}
 
-		return r.readConfig(ctx, configPath)
+		return r.readConfigurationFile(ctx, configPath, func(_ string) (bool, error) {
+			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
+		})
 	}
 
 	return nil, r.prepareConfigNotFoundError(ctx, configRelPathList)
-}
-
-func (r FileReader) isConfigExist(ctx context.Context, relPath string) (bool, error) {
-	return r.isConfigurationFileExist(ctx, relPath, func(_ string) (bool, error) {
-		return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
-	})
-}
-
-func (r FileReader) readConfig(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readConfigurationFile(ctx, configErrorConfigType, relPath, func(relPath string) (bool, error) {
-		return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
-	})
-}
-
-func (r FileReader) readCommitConfig(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readCommitFile(ctx, relPath, func(ctx context.Context, relPath string) error {
-		return NewUncommittedFilesChangesError(configErrorConfigType, relPath)
-	})
 }
 
 func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) error {
