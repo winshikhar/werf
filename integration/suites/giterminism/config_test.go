@@ -68,11 +68,11 @@ project: none
 			}
 		},
 		Entry("werf.yaml not found", entry{
-			expectedErrSubstring: `unable to read the werf config: the file 'werf.yaml' not found in the project git repository`,
+			expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' not found in the project git repository`,
 		}),
 		Entry("werf.yaml not committed", entry{
 			addConfig:            true,
-			expectedErrSubstring: `unable to read the werf config: the file 'werf.yaml' must be committed`,
+			expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
 		}),
 		Entry("werf.yaml committed", entry{
 			addConfig:    true,
@@ -82,7 +82,7 @@ project: none
 			addConfig:               true,
 			commitConfig:            true,
 			changeConfigAfterCommit: true,
-			expectedErrSubstring:    `unable to read the werf config: the file 'werf.yaml' changes must be committed`,
+			expectedErrSubstring:    `unable to read werf config: the file 'werf.yaml' changes must be committed`,
 		}),
 		Entry("config.allowUncommitted is true, werf.yaml not committed", entry{
 			allowUncommitted: true,
