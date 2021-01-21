@@ -11,6 +11,7 @@ import (
 
 type NewManagerOptions struct {
 	LooseGiterminism bool
+	DevMode          bool
 }
 
 func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
@@ -61,6 +62,7 @@ type sharedOptions struct {
 	headCommit       string
 	localGitRepo     git_repo.Local
 	looseGiterminism bool
+	devMode          bool
 }
 
 func (s *sharedOptions) ProjectDir() string {
@@ -77,4 +79,8 @@ func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
 
 func (s *sharedOptions) LooseGiterminism() bool {
 	return s.looseGiterminism
+}
+
+func (s *sharedOptions) DevMode() bool {
+	return s.devMode
 }

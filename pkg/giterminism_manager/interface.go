@@ -15,6 +15,7 @@ type Interface interface {
 
 	LocalGitRepo() *git_repo.Local
 	ProjectDir() string
+	DevMode() bool
 }
 
 type FileReader interface {

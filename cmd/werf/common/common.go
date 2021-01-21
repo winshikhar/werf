@@ -978,6 +978,7 @@ func GetGiterminismManager(cmdData *CmdData) (giterminism_manager.Interface, err
 
 	return giterminism_manager.NewManager(BackgroundContext(), projectDir, localGitRepo, headCommit, giterminism_manager.NewManagerOptions{
 		LooseGiterminism: *cmdData.LooseGiterminism,
+		DevMode:          *cmdData.Dev,
 	})
 }
 
