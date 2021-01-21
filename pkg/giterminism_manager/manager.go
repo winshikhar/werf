@@ -20,6 +20,7 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 		localGitRepo:     localGitRepo,
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
+		devMode:          options.DevMode,
 	}
 
 	fr := file_reader.NewFileReader(sharedContext)
