@@ -201,7 +201,6 @@ func (r *Result) LsTreeEntry(resolvedRelPath string) *LsTreeEntry {
 	_ = r.Walk(func(entry *LsTreeEntry) error {
 		if filepath.ToSlash(entry.FullFilepath) == filepath.ToSlash(resolvedRelPath) {
 			lsTreeEntry = entry
-			return nil
 		}
 
 		return nil
