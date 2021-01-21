@@ -12,39 +12,62 @@ import (
 	"github.com/werf/werf/pkg/util"
 )
 
-func (r FileReader) LocateChart(ctx context.Context, relDir string, _ *cli.EnvSettings) (string, error) {
+func (r FileReader) LocateChart(ctx context.Context, relDir string, settings *cli.EnvSettings) (string, error) {
+	chartDir, err := r.locateChart(ctx, relDir, settings)
+	if err != nil {
+		return "", fmt.Errorf("unable to locate chart directory: %s", err)
+	}
+
+	return chartDir, nil
+}
+
+func (r FileReader) locateChart(ctx context.Context, relDir string, _ *cli.EnvSettings) (string, error) {
 	files, err := r.loadChartDir(ctx, relDir)
 	if err != nil {
 		return "", err
 	}
 
 	if len(files) == 0 {
-		return "", NewFilesNotFoundInTheProjectGitRepositoryError(chartDirectoryErrorConfigType, relDir)
+		return "", fmt.Errorf("the directory '%s' not found in the project git repository", relDir)
 	}
 
-	return relDir, nil
+	return relDir, nil // TODO relDir should be resolved
 }
 
 func (r FileReader) ReadChartFile(ctx context.Context, relPath string) ([]byte, error) {
-	if err := r.checkChartFileExistence(ctx, relPath); err != nil {
+	data, err := r.readChartFile(ctx, relPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read chart file: %s", err)
+	}
+
+	return data, nil
+}
+
+func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
+	if err := r.checkConfigurationFileExistence(ctx, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted); err != nil {
 		return nil, err
 	}
 
-	return r.readChartFile(ctx, relPath)
+	return r.checkAndReadConfigurationFile(ctx, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted)
 }
 
 func (r FileReader) LoadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
-	return r.loadChartDir(ctx, relDir)
+	files, err := r.loadChartDir(ctx, relDir)
+	if err != nil {
+		return nil, fmt.Errorf("unable to load chart directory: %s", err)
+	}
+
+	return files, nil
 }
 
 // TODO helmignore support
 func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.ChartExtenderBufferedFile, error) {
 	var res []*chart.ChartExtenderBufferedFile
 
-	if exist, err := r.isConfigurationFileExistAnywhere(ctx, relDir); err != nil {
+	if exist, err := r.isConfigurationDirectoryExistAnywhere(ctx, relDir); err != nil {
 		return nil, err
 	} else if !exist {
-		return nil, NewFilesNotFoundInTheProjectGitRepositoryError(chartDirectoryErrorConfigType, relDir)
+		return nil, fmt.Errorf("the directory '%s' not found in the project git repository", relDir)
 	}
 
 	// TODO configurationFilesGlob method must resolve symlinks properly
@@ -56,10 +79,8 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 	pattern := filepath.Join(relDir, "**/*")
 	if err := r.configurationFilesGlob(
 		ctx,
-		chartFileErrorConfigType,
 		pattern,
 		r.giterminismConfig.IsUncommittedHelmFileAccepted,
-		r.readChartFile,
 		func(relPath string, data []byte, err error) error {
 			if err != nil {
 				return err
@@ -90,20 +111,12 @@ func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
 	}
 
 	if !linkStat.IsDir() {
-		return "", fmt.Errorf("unable to handle the chart directory '%s': linked to file not a directory", link)
+		return "", fmt.Errorf("unable to handle chart directory '%s': linked to file not a directory", link)
 	}
 
 	if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), link) {
-		return "", fmt.Errorf("unable to handle the chart directory '%s' which is located outside the project directory", link)
+		return "", fmt.Errorf("unable to handle chart directory '%s' which is located outside the project directory", link)
 	}
 
 	return util.GetRelativeToBaseFilepath(r.sharedContext.ProjectDir(), link), nil
-}
-
-func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
-	return r.readConfigurationFile(ctx, chartFileErrorConfigType, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted)
-}
-
-func (r FileReader) checkChartFileExistence(ctx context.Context, relPath string) error {
-	return r.checkConfigurationFileExistence(ctx, chartFileErrorConfigType, relPath, r.giterminismConfig.IsUncommittedHelmFileAccepted)
 }
