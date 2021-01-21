@@ -23,7 +23,7 @@ func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath str
 func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) ([]byte, error) {
 	data, err := r.readConfig(ctx, customRelPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read the werf config: %s", err)
+		return nil, fmt.Errorf("unable to read werf config: %s", err)
 	}
 
 	return data, nil
