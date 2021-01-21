@@ -6,7 +6,7 @@ import (
 )
 
 func (i Inspector) InspectConfigGoTemplateRenderingEnv(ctx context.Context, envName string) error {
-	if i.sharedOptions.LooseGiterminism() {
+	if i.sharedContext.LooseGiterminism() {
 		return nil
 	}
 

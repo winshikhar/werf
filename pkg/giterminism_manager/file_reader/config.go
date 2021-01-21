@@ -72,7 +72,7 @@ func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsT
 		configPath = "werf.yaml"
 	}
 
-	if r.sharedOptions.LooseGiterminism() {
+	if r.sharedContext.LooseGiterminism() {
 		return NewFilesNotFoundInTheProjectDirectoryError(configErrorConfigType, configPath)
 	} else {
 		return NewFilesNotFoundInTheProjectGitRepositoryError(configErrorConfigType, configPath)

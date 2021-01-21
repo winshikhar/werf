@@ -16,7 +16,7 @@ const (
 )
 
 type FileReader struct {
-	sharedOptions     sharedOptions
+	sharedContext     sharedContext
 	giterminismConfig giterminismConfig
 }
 
@@ -24,8 +24,8 @@ func (r *FileReader) SetGiterminismConfig(giterminismConfig giterminismConfig) {
 	r.giterminismConfig = giterminismConfig
 }
 
-func NewFileReader(sharedOptions sharedOptions) FileReader {
-	return FileReader{sharedOptions: sharedOptions}
+func NewFileReader(sharedContext sharedContext) FileReader {
+	return FileReader{sharedContext: sharedContext}
 }
 
 type giterminismConfig interface {
@@ -37,7 +37,7 @@ type giterminismConfig interface {
 	IsUncommittedHelmFileAccepted(relPath string) (bool, error)
 }
 
-type sharedOptions interface {
+type sharedContext interface {
 	ProjectDir() string
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string

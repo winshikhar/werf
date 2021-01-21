@@ -2,11 +2,11 @@ package inspector
 
 type Inspector struct {
 	giterminismConfig giterminismConfig
-	sharedOptions     sharedOptions
+	sharedContext     sharedContext
 }
 
-func NewInspector(giterminismConfig giterminismConfig, sharedOptions sharedOptions) Inspector {
-	return Inspector{giterminismConfig: giterminismConfig, sharedOptions: sharedOptions}
+func NewInspector(giterminismConfig giterminismConfig, sharedContext sharedContext) Inspector {
+	return Inspector{giterminismConfig: giterminismConfig, sharedContext: sharedContext}
 }
 
 type giterminismConfig interface {
@@ -18,6 +18,6 @@ type giterminismConfig interface {
 	IsConfigDockerfileContextAddFileAccepted(relPath string) (bool, error)
 }
 
-type sharedOptions interface {
+type sharedContext interface {
 	LooseGiterminism() bool
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func (i Inspector) InspectConfigStapelFromLatest() error {
-	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelFromLatestAccepted() {
+	if i.sharedContext.LooseGiterminism() || i.giterminismConfig.IsConfigStapelFromLatestAccepted() {
 		return nil
 	}
 
@@ -20,7 +20,7 @@ We recommend a particular unchangeable tag or periodically change 'fromCacheVers
 }
 
 func (i Inspector) InspectConfigStapelGitBranch() error {
-	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelGitBranchAccepted() {
+	if i.sharedContext.LooseGiterminism() || i.giterminismConfig.IsConfigStapelGitBranchAccepted() {
 		return nil
 	}
 
@@ -28,7 +28,7 @@ func (i Inspector) InspectConfigStapelGitBranch() error {
 }
 
 func (i Inspector) InspectConfigStapelMountBuildDir() error {
-	if i.sharedOptions.LooseGiterminism() || i.giterminismConfig.IsConfigStapelMountBuildDirAccepted() {
+	if i.sharedContext.LooseGiterminism() || i.giterminismConfig.IsConfigStapelMountBuildDirAccepted() {
 		return nil
 	}
 
@@ -36,7 +36,7 @@ func (i Inspector) InspectConfigStapelMountBuildDir() error {
 }
 
 func (i Inspector) InspectConfigStapelMountFromPath(fromPath string) error {
-	if i.sharedOptions.LooseGiterminism() {
+	if i.sharedContext.LooseGiterminism() {
 		return nil
 	}
 

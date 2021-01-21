@@ -15,14 +15,14 @@ type NewManagerOptions struct {
 }
 
 func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
-	sharedOptions := &sharedOptions{
+	sharedContext := &sharedContext{
 		projectDir:       projectDir,
 		localGitRepo:     localGitRepo,
 		headCommit:       headCommit,
 		looseGiterminism: options.LooseGiterminism,
 	}
 
-	fr := file_reader.NewFileReader(sharedOptions)
+	fr := file_reader.NewFileReader(sharedContext)
 
 	c, err := config.NewConfig(ctx, fr)
 	if err != nil {
@@ -31,10 +31,10 @@ func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Lo
 
 	fr.SetGiterminismConfig(c)
 
-	i := inspector.NewInspector(c, sharedOptions)
+	i := inspector.NewInspector(c, sharedContext)
 
 	m := &Manager{
-		sharedOptions: sharedOptions,
+		sharedContext: sharedContext,
 		fileReader:    fr,
 		inspector:     i,
 	}
@@ -46,7 +46,7 @@ type Manager struct {
 	fileReader FileReader
 	inspector  Inspector
 
-	*sharedOptions
+	*sharedContext
 }
 
 func (m Manager) FileReader() FileReader {
@@ -55,32 +55,4 @@ func (m Manager) FileReader() FileReader {
 
 func (m Manager) Inspector() Inspector {
 	return m.inspector
-}
-
-type sharedOptions struct {
-	projectDir       string
-	headCommit       string
-	localGitRepo     git_repo.Local
-	looseGiterminism bool
-	devMode          bool
-}
-
-func (s *sharedOptions) ProjectDir() string {
-	return s.projectDir
-}
-
-func (s *sharedOptions) HeadCommit() string {
-	return s.headCommit
-}
-
-func (s *sharedOptions) LocalGitRepo() *git_repo.Local {
-	return &s.localGitRepo
-}
-
-func (s *sharedOptions) LooseGiterminism() bool {
-	return s.looseGiterminism
-}
-
-func (s *sharedOptions) DevMode() bool {
-	return s.devMode
 }

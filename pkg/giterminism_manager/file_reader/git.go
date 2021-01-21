@@ -10,11 +10,11 @@ import (
 )
 
 func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedOptions.HeadCommit(), relPath)
+	exist, err := r.sharedContext.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedContext.HeadCommit(), relPath)
 	if err != nil {
 		err := fmt.Errorf(
 			"unable to check existence of directory %s in the project git repo commit %s: %s",
-			relPath, r.sharedOptions.HeadCommit(), err,
+			relPath, r.sharedContext.HeadCommit(), err,
 		)
 		return false, err
 	}
@@ -23,11 +23,11 @@ func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) 
 }
 
 func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedOptions.LocalGitRepo().IsCommitFileExists(ctx, r.sharedOptions.HeadCommit(), relPath)
+	exist, err := r.sharedContext.LocalGitRepo().IsCommitFileExists(ctx, r.sharedContext.HeadCommit(), relPath)
 	if err != nil {
 		err := fmt.Errorf(
 			"unable to check existence of file %s in the project git repo commit %s: %s",
-			relPath, r.sharedOptions.HeadCommit(), err,
+			relPath, r.sharedContext.HeadCommit(), err,
 		)
 		return false, err
 	}
@@ -38,7 +38,7 @@ func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool
 func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]string, error) {
 	var result []string
 
-	commitPathList, err := r.sharedOptions.LocalGitRepo().GetCommitFilePathList(ctx, r.sharedOptions.HeadCommit())
+	commitPathList, err := r.sharedContext.LocalGitRepo().GetCommitFilePathList(ctx, r.sharedContext.HeadCommit())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
 	}
@@ -59,9 +59,9 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUncommittedChangesFunc func(context.Context, string) error) ([]byte, error) {
 	fileRepoPath := filepath.ToSlash(relPath)
 
-	repoData, err := r.sharedOptions.LocalGitRepo().ReadCommitFile(ctx, r.sharedOptions.HeadCommit(), fileRepoPath)
+	repoData, err := r.sharedContext.LocalGitRepo().ReadCommitFile(ctx, r.sharedContext.HeadCommit(), fileRepoPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", fileRepoPath, r.sharedOptions.HeadCommit(), err)
+		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", fileRepoPath, r.sharedContext.HeadCommit(), err)
 	}
 
 	if handleUncommittedChangesFunc == nil {

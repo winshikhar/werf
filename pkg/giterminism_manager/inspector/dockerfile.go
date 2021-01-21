@@ -6,7 +6,7 @@ import (
 )
 
 func (i Inspector) InspectConfigDockerfileContextAddFile(relPath string) error {
-	if i.sharedOptions.LooseGiterminism() {
+	if i.sharedContext.LooseGiterminism() {
 		return nil
 	}
 

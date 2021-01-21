@@ -31,7 +31,7 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, configType confi
 		return err
 	}
 
-	if r.sharedOptions.LooseGiterminism() {
+	if r.sharedContext.LooseGiterminism() {
 		for _, relPath := range fileRelPathListFromFS {
 			data, err := readFileFunc(relPath)
 			if err := handleFileFunc(relPath, data, err); err != nil {
@@ -104,7 +104,7 @@ func (r FileReader) readConfigurationFile(ctx context.Context, configType config
 		return nil, err
 	}
 
-	if r.sharedOptions.LooseGiterminism() || accepted {
+	if r.sharedContext.LooseGiterminism() || accepted {
 		return r.readFile(relPath)
 	}
 
@@ -119,7 +119,7 @@ func (r FileReader) checkConfigurationDirectoryExistence(ctx context.Context, co
 		return err
 	}
 
-	shouldReadFromFS := r.sharedOptions.LooseGiterminism() || accepted
+	shouldReadFromFS := r.sharedContext.LooseGiterminism() || accepted
 	if !shouldReadFromFS {
 		if exist, err := r.isCommitDirectoryExist(ctx, relPath); err != nil {
 			return err
@@ -154,7 +154,7 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, configT
 		return err
 	}
 
-	shouldReadFromFS := r.sharedOptions.LooseGiterminism() || accepted
+	shouldReadFromFS := r.sharedContext.LooseGiterminism() || accepted
 	if !shouldReadFromFS {
 		if exist, err := r.isCommitFileExist(ctx, relPath); err != nil {
 			return err
@@ -199,7 +199,7 @@ func (r FileReader) isConfigurationDirectoryExist(ctx context.Context, relPath s
 		return false, err
 	}
 
-	if r.sharedOptions.LooseGiterminism() || accepted {
+	if r.sharedContext.LooseGiterminism() || accepted {
 		return r.isDirectoryExist(relPath)
 	}
 
@@ -212,7 +212,7 @@ func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string
 		return false, err
 	}
 
-	if r.sharedOptions.LooseGiterminism() || accepted {
+	if r.sharedContext.LooseGiterminism() || accepted {
 		return r.isFileExist(relPath)
 	}
 

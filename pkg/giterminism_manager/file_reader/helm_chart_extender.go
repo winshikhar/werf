@@ -78,7 +78,7 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 }
 
 func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
-	absDir := filepath.Join(r.sharedOptions.ProjectDir(), relDir)
+	absDir := filepath.Join(r.sharedContext.ProjectDir(), relDir)
 	link, err := filepath.EvalSymlinks(absDir)
 	if err != nil {
 		return "", fmt.Errorf("eval symlink %s failed: %s", absDir, err)
@@ -93,11 +93,11 @@ func (r FileReader) resolveChartDirectory(relDir string) (string, error) {
 		return "", fmt.Errorf("unable to handle the chart directory '%s': linked to file not a directory", link)
 	}
 
-	if !util.IsSubpathOfBasePath(r.sharedOptions.ProjectDir(), link) {
+	if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), link) {
 		return "", fmt.Errorf("unable to handle the chart directory '%s' which is located outside the project directory", link)
 	}
 
-	return util.GetRelativeToBaseFilepath(r.sharedOptions.ProjectDir(), link), nil
+	return util.GetRelativeToBaseFilepath(r.sharedContext.ProjectDir(), link), nil
 }
 
 func (r FileReader) readChartFile(ctx context.Context, relPath string) ([]byte, error) {
