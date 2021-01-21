@@ -351,7 +351,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 	var resolvedPath string
 	for ind := 0; ind < partsLen; ind++ {
-		isLastPathPart := ind != partsLen-1
+		isLastPathPart := ind == partsLen-1
 		pathToResolve := pathPkg.Join(resolvedPath, parts[ind])
 
 		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, pathToResolve)
@@ -413,8 +413,8 @@ func (repo *Local) getCommitTreeEntryContent(ctx context.Context, commit, relPat
 	return lsTreeResult.LsTreeEntryContent(relPath)
 }
 
-func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, relPath string) (*ls_tree.LsTreeEntry, error) {
-	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(relPath, []string{}, false), LsTreeOptions{
+func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
+	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(path, []string{}, false), LsTreeOptions{
 		Commit: commit,
 		Strict: true,
 	})
@@ -422,7 +422,7 @@ func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, relPath strin
 		return nil, err
 	}
 
-	entry := lsTreeResult.LsTreeEntry(relPath)
+	entry := lsTreeResult.LsTreeEntry(path)
 
 	return entry, nil
 }

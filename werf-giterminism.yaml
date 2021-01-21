@@ -1,0 +1,25 @@
+giterminismConfigVersion: "1"
+config:
+  allowUncommittedTemplates:
+    - .werf/from2.tmpl
+  stapel:
+#    git:
+#      allowBranch: true
+    mount:
+      allowBuildDir: true
+      allowFromPaths:
+        - a/b/c
+  goTemplateRendering:
+    allowEnvVariables:
+      - VARIABLE_X
+      - /^AS$/
+      - CI_*
+    allowUncommittedFiles:
+      - cmd/test/test
+      - cmd/test/test2
+  dockerfile:
+    allowUncommitted:
+      - "/**/Dockerfile/"
+    allowContextAddFiles:
+      - integration
+      - integration/README.md
