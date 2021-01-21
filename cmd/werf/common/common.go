@@ -993,6 +993,9 @@ func InitGiterminismInspector(cmdData *CmdData) error {
 	})
 }
 
+// FIXME: project-dir is where werf.yaml for the project stored
+// FIXME: repo-dir is where .git has been found
+// FIXME: use werf.yaml from the project-dir by default, not repo-dir
 func GetProjectDir(cmdData *CmdData) (string, error) {
 	var projectDir string
 	if *cmdData.Dir != "" {
