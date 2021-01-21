@@ -2,6 +2,7 @@ package file_reader
 
 import (
 	"context"
+	"fmt"
 )
 
 var DefaultWerfConfigNames = []string{"werf.yaml", "werf.yml"}
@@ -20,6 +21,15 @@ func (r FileReader) IsConfigExistAnywhere(ctx context.Context, customRelPath str
 }
 
 func (r FileReader) ReadConfig(ctx context.Context, customRelPath string) ([]byte, error) {
+	data, err := r.readConfig(ctx, customRelPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read the werf config: %s", err)
+	}
+
+	return data, nil
+}
+
+func (r FileReader) readConfig(ctx context.Context, customRelPath string) ([]byte, error) {
 	configRelPathList := r.configPathList(customRelPath)
 
 	for _, configPath := range configRelPathList {
@@ -55,7 +65,7 @@ func (r FileReader) readCommitConfig(ctx context.Context, relPath string) ([]byt
 
 func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsToCheck []string) error {
 	for _, configPath := range configPathsToCheck {
-		err := r.checkConfigurationFileExistence(ctx, configErrorConfigType, configPath, func(_ string) (bool, error) {
+		err := r.checkConfigurationFileExistence(ctx, configPath, func(_ string) (bool, error) {
 			return r.giterminismConfig.IsUncommittedConfigAccepted(), nil
 		})
 
@@ -73,9 +83,9 @@ func (r FileReader) prepareConfigNotFoundError(ctx context.Context, configPathsT
 	}
 
 	if r.sharedContext.LooseGiterminism() {
-		return NewFilesNotFoundInTheProjectDirectoryError(configErrorConfigType, configPath)
+		return NewFilesNotFoundInTheProjectDirectoryError(configPath)
 	} else {
-		return NewFilesNotFoundInTheProjectGitRepositoryError(configErrorConfigType, configPath)
+		return NewFilesNotFoundInTheProjectGitRepositoryError(configPath)
 	}
 }
 
