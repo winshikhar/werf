@@ -2,7 +2,6 @@ package giterminism_manager
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/werf/werf/pkg/git_repo"
 	"github.com/werf/werf/pkg/giterminism_manager/config"
@@ -16,7 +15,7 @@ type NewManagerOptions struct {
 }
 
 func NewManager(ctx context.Context, projectDir string, localGitRepo git_repo.Local, headCommit string, options NewManagerOptions) (Interface, error) {
-	sharedContext, err := NewSharedContext(projectDir, localGitRepo, headCommit, NewSharedContextOptions{
+	sharedContext, err := NewSharedContext(ctx, projectDir, localGitRepo, headCommit, NewSharedContextOptions{
 		looseGiterminism: options.LooseGiterminism,
 		devMode:          options.DevMode,
 	})
