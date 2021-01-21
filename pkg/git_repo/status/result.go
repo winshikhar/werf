@@ -162,3 +162,26 @@ func isFileStatusAccepted(fileStatus *git.FileStatus, options FilterOptions) boo
 func isFileStatusCodeExpected(code git.StatusCode) bool {
 	return !(code == git.Unmodified || code == git.Untracked)
 }
+
+func (r *Result) UninitializedSubmodulePathList() []string {
+	var result []string
+	for _, r := range r.submoduleResults {
+		if r.isNotInitialized {
+			result = append(result, r.repositoryFullFilepath)
+		}
+
+		result = append(result, r.UninitializedSubmodulePathList()...)
+	}
+
+	return result
+}
+
+func (r *Result) IsFileChanged(relPath string, options FilterOptions) bool {
+	for _, p := range r.FilePathList(options) {
+		if filepath.ToSlash(p) == filepath.ToSlash(relPath) {
+			return true
+		}
+	}
+
+	return false
+}
