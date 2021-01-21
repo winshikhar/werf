@@ -1,7 +1,6 @@
 package file_reader
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -9,30 +8,39 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedContext.LocalGitRepo().IsCommitDirectoryExists(ctx, r.sharedContext.HeadCommit(), relPath)
-	if err != nil {
-		err := fmt.Errorf(
-			"unable to check existence of directory %s in the project git repo commit %s: %s",
-			relPath, r.sharedContext.HeadCommit(), err,
-		)
-		return false, err
-	}
-
-	return exist, nil
+func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedContext.LocalGitRepo().IsCommitFileExist(ctx, r.sharedContext.HeadCommit(), relPath)
 }
 
-func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
-	exist, err := r.sharedContext.LocalGitRepo().IsCommitFileExists(ctx, r.sharedContext.HeadCommit(), relPath)
-	if err != nil {
-		err := fmt.Errorf(
-			"unable to check existence of file %s in the project git repo commit %s: %s",
-			relPath, r.sharedContext.HeadCommit(), err,
-		)
-		return false, err
+func (r FileReader) isCommitDirectoryExist(ctx context.Context, relPath string) (bool, error) {
+	return r.sharedContext.LocalGitRepo().IsCommitDirectoryExist(ctx, r.sharedContext.HeadCommit(), relPath)
+}
+
+func (r FileReader) checkAndReadCommitConfigurationFile(ctx context.Context, relPath string) ([]byte, error) {
+	if err := r.checkCommitFilePath(ctx, relPath); err != nil {
+		return nil, err
 	}
 
-	return exist, nil
+	return r.readCommitFile(ctx, relPath)
+}
+
+func (r FileReader) checkCommitFilePath(ctx context.Context, relPath string) error {
+	if !r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
+		fileChanged, err := r.sharedContext.IsWorktreeFileModified(ctx, relPath)
+		if err != nil {
+			return err
+		}
+
+		if fileChanged {
+			return NewUncommittedFilesChangesError(relPath)
+		}
+	}
+
+	return nil
+}
+
+func (r FileReader) readCommitFile(ctx context.Context, relPath string) ([]byte, error) {
+	return r.sharedContext.LocalGitRepo().ReadCommitFile(ctx, r.sharedContext.HeadCommit(), relPath)
 }
 
 func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]string, error) {
@@ -54,50 +62,4 @@ func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]stri
 	}
 
 	return result, nil
-}
-
-func (r FileReader) readCommitFile(ctx context.Context, relPath string, handleUncommittedChangesFunc func(context.Context, string) error) ([]byte, error) {
-	fileRepoPath := filepath.ToSlash(relPath)
-
-	repoData, err := r.sharedContext.LocalGitRepo().ReadCommitFile(ctx, r.sharedContext.HeadCommit(), fileRepoPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file %q from the local git repo commit %s: %s", fileRepoPath, r.sharedContext.HeadCommit(), err)
-	}
-
-	if handleUncommittedChangesFunc == nil {
-		return repoData, nil
-	}
-
-	isDataIdentical, err := r.compareFileData(relPath, repoData)
-	if err != nil {
-		return nil, fmt.Errorf("unable to compare commit file %q with the local project file: %s", fileRepoPath, err)
-	}
-
-	if !isDataIdentical {
-		if err := handleUncommittedChangesFunc(ctx, filepath.FromSlash(relPath)); err != nil {
-			return nil, err
-		}
-	}
-
-	return repoData, err
-}
-
-func (r FileReader) compareFileData(relPath string, data []byte) (bool, error) {
-	var fileData []byte
-	if exist, err := r.isFileExist(relPath); err != nil {
-		return false, err
-	} else if exist {
-		fileData, err = r.readFile(relPath)
-		if err != nil {
-			return false, err
-		}
-	}
-
-	isDataIdentical := bytes.Equal(fileData, data)
-	fileDataWithForcedUnixLineBreak := bytes.ReplaceAll(fileData, []byte("\r\n"), []byte("\n"))
-	if !isDataIdentical {
-		isDataIdentical = bytes.Equal(fileDataWithForcedUnixLineBreak, data)
-	}
-
-	return isDataIdentical, nil
 }

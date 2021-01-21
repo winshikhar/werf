@@ -3,11 +3,7 @@ package file_reader
 import (
 	"context"
 	"errors"
-	"fmt"
-	"os"
 	"path/filepath"
-
-	"github.com/werf/werf/pkg/util"
 )
 
 func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
@@ -223,76 +219,17 @@ var skipReadingNotAcceptedFile = errors.New("skip reading not accepted file")
 var skipReadingFileInsideUninitializedSubmodule = errors.New("skip reading file inside uninitialized submodule")
 
 func (r FileReader) checkAndReadConfigurationFile(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
-	data, err := r.checkAndReadFile(ctx, relPath, 0, isFileAcceptedFunc)
+	data, err := r.checkAndReadFile(relPath, isFileAcceptedFunc)
 	if err != nil {
 		if err == skipReadingFileInsideUninitializedSubmodule || err == skipReadingNotAcceptedFile {
 			goto readCommitFile
 		}
 
-		return nil, fmt.Errorf("unable to read file %s: %s", relPath, err)
+		return nil, err
 	}
 
 	return data, nil
 
 readCommitFile:
 	return r.checkAndReadCommitConfigurationFile(ctx, relPath)
-}
-
-func (r FileReader) checkAndReadFile(ctx context.Context, relPath string, depth int, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
-	if depth > 100 {
-		return nil, fmt.Errorf("too many levels of symbolic links")
-	}
-
-	shouldReadFile, err := r.shouldReadFile(relPath, isFileAcceptedFunc)
-	if err != nil {
-		return nil, err
-	}
-
-	if !shouldReadFile {
-		return nil, skipReadingNotAcceptedFile
-	}
-
-	absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
-	fileInfo, err := os.Stat(absPath)
-	if err != nil {
-		return nil, fmt.Errorf("unable to access %s: %s", absPath, err)
-	}
-
-	if fileInfo.IsDir() {
-		return nil, fmt.Errorf("unable to read directory %s", absPath)
-	}
-
-	if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-		link, err := filepath.EvalSymlinks(absPath)
-		if err != nil {
-			return nil, fmt.Errorf("unable to eval symlink %s: %s", absPath, err)
-		}
-
-		absLink := util.GetAbsoluteFilepath(link)
-		if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), absLink) {
-			return nil, fmt.Errorf("!!!")
-		}
-
-		linkRelPath := util.GetRelativeToBaseFilepath(r.sharedContext.ProjectDir(), absLink)
-		return r.checkAndReadFile(ctx, linkRelPath, depth, isFileAcceptedFunc)
-	}
-
-	return r.readFile(relPath)
-}
-
-func (r FileReader) shouldReadFile(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
-	if r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
-		return false, skipReadingFileInsideUninitializedSubmodule
-	}
-
-	if r.sharedContext.LooseGiterminism() {
-		return true, nil
-	}
-
-	accepted, err := isFileAcceptedFunc(relPath)
-	if err != nil {
-		return false, err
-	}
-
-	return accepted, nil
 }

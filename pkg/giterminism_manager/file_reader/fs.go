@@ -56,6 +56,38 @@ func (r FileReader) filesGlob(pattern string) ([]string, error) {
 	return result, err
 }
 
+func (r FileReader) checkAndReadFile(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
+	accepted, err := r.checkFilePath(relPath, isFileAcceptedFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	if !accepted {
+		return nil, skipReadingNotAcceptedFile
+	}
+
+	return r.readFile(relPath)
+}
+
+// TODO resolve symlinks
+func (r FileReader) checkFilePath(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
+	if r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
+		return false, skipReadingFileInsideUninitializedSubmodule
+	}
+
+	if r.sharedContext.LooseGiterminism() {
+		return true, nil
+	}
+
+	accepted, err := isFileAcceptedFunc(relPath)
+	if err != nil {
+		return false, err
+	}
+
+	return accepted, nil
+}
+
+// TODO resolve symlinks
 func (r FileReader) readFile(relPath string) ([]byte, error) {
 	absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
 	data, err := ioutil.ReadFile(absPath)
@@ -66,6 +98,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 	return data, nil
 }
 
+// TODO resolve symlinks
 func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 	absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
 	exist, err := util.DirExists(absPath)
@@ -76,6 +109,7 @@ func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 	return exist, nil
 }
 
+// TODO resolve symlinks
 func (r FileReader) isFileExist(relPath string) (bool, error) {
 	absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
 	exist, err := util.FileExists(absPath)
