@@ -1,18 +1,9 @@
 package file_reader
 
-import "github.com/werf/werf/pkg/git_repo"
+import (
+	"context"
 
-type configType string
-
-const (
-	giterminismConfigErrorConfigType configType = "giterminism config"
-	configErrorConfigType            configType = "werf config"
-	configTemplateErrorConfigType    configType = "werf config template"
-	configGoTemplateErrorConfigType  configType = "file"
-	dockerfileErrorConfigType        configType = "dockerfile"
-	dockerignoreErrorConfigType      configType = "dockerignore file"
-	chartFileErrorConfigType         configType = "chart file"
-	chartDirectoryErrorConfigType    configType = "chart directory"
+	"github.com/werf/werf/pkg/git_repo"
 )
 
 type FileReader struct {
@@ -42,4 +33,7 @@ type sharedContext interface {
 	LocalGitRepo() *git_repo.Local
 	HeadCommit() string
 	LooseGiterminism() bool
+
+	IsWorktreeFileModified(ctx context.Context, relPath string) (bool, error)
+	IsFileInsideUninitializedSubmodule(relPath string) bool
 }
