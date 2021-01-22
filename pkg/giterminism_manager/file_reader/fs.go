@@ -167,7 +167,7 @@ var (
 
 func (r FileReader) ResolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
 	path, err := r.resolveFilePath(relPath, depth, checkFunc)
-	fmt.Println("resolve", path, err)
+	fmt.Printf("%q %q %q %q", "resolve", relPath, path, err)
 	return path, err
 }
 
