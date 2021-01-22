@@ -217,11 +217,16 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 				return "", fmt.Errorf("unable to eval symlinks %s: %s", link, err)
 			}
 
-			if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), link) {
+			resolvedLink := link
+			if !filepath.IsAbs(link) {
+				resolvedLink = filepath.Join(absPathToResolve, link)
+			}
+
+			if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), resolvedLink) {
 				return "", FileNotFoundInProjectDirectoryErr
 			}
 
-			resolvedTarget, err := r.resolveFilePath(link, depth, checkFunc)
+			resolvedTarget, err := r.resolveFilePath(resolvedLink, depth, checkFunc)
 			if err != nil {
 				return "", err
 			}
