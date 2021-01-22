@@ -122,7 +122,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 	resolvedRelPath, err := r.resolveFilePath(relPath, 0, nil)
 	if err != nil {
-		if err == EntryNotFoundInRepoErr {
+		if err == FileNotFoundInProjectDirectoryErr {
 			return false, nil
 		}
 
@@ -143,7 +143,7 @@ func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 func (r FileReader) isRegularFileExist(relPath string) (bool, error) {
 	resolvedRelPath, err := r.resolveFilePath(relPath, 0, nil)
 	if err != nil {
-		if err == EntryNotFoundInRepoErr {
+		if err == FileNotFoundInProjectDirectoryErr {
 			return false, nil
 		}
 
@@ -161,8 +161,8 @@ func (r FileReader) isRegularFileExist(relPath string) (bool, error) {
 }
 
 var (
-	EntryNotFoundInRepoErr          = fmt.Errorf("resolved path not found in the repo")
-	TooManyLevelsOfSymbolicLinksErr = fmt.Errorf("too many levels of symbolic links")
+	FileNotFoundInProjectDirectoryErr = fmt.Errorf("file not found in the project directory")
+	TooManyLevelsOfSymbolicLinksErr   = fmt.Errorf("too many levels of symbolic links")
 )
 
 func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
@@ -201,6 +201,10 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 
 		stat, err := os.Stat(absPathToResolve)
 		if err != nil {
+			if os.IsNotExist(err) || util.IsNotADirectoryError(err) {
+				return "", FileNotFoundInProjectDirectoryErr
+			}
+
 			return "", fmt.Errorf("unable to access file %s: %s", absPathToResolve, err)
 		}
 
@@ -212,7 +216,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 			}
 
 			if !util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), link) {
-				return "", EntryNotFoundInRepoErr
+				return "", FileNotFoundInProjectDirectoryErr
 			}
 
 			resolvedTarget, err := r.resolveFilePath(link, depth, checkFunc)
@@ -222,7 +226,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 
 			resolvedPath = resolvedTarget
 		case !stat.IsDir() && !isLastPathPart:
-			return "", EntryNotFoundInRepoErr
+			return "", FileNotFoundInProjectDirectoryErr
 		default:
 			resolvedPath = pathToResolve
 		}

@@ -21,7 +21,7 @@ import (
 
 var (
 	ErrLocalRepositoryNotExists     = git.ErrRepositoryNotExists
-	EntryNotFoundInRepoErr          = fmt.Errorf("resolved path not found in the repo")
+	EntryNotFoundInRepoErr          = fmt.Errorf("entry not found in the repo")
 	TooManyLevelsOfSymbolicLinksErr = fmt.Errorf("too many levels of symbolic links")
 )
 
