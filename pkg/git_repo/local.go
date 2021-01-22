@@ -346,13 +346,31 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 	}
 	depth++
 
-	parts := util.SplitFilepath(path)
-	partsLen := len(parts)
+	// returns path if the corresponding tree entry is Regular, Deprecated, Executable, Dir, or Submodule.
+	{
+		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, path)
+		if err != nil {
+			return "", fmt.Errorf("unable to get commit tree entry %s: %s", path, err)
+		}
+
+		if !lsTreeEntry.Mode.IsMalformed() && !(lsTreeEntry.Mode == filemode.Symlink) {
+			if checkFunc != nil {
+				if err := checkFunc(path); err != nil {
+					return "", err
+				}
+			}
+
+			return path, nil
+		}
+	}
+
+	pathParts := util.SplitFilepath(path)
+	pathPartsLen := len(pathParts)
 
 	var resolvedPath string
-	for ind := 0; ind < partsLen; ind++ {
-		isLastPathPart := ind == partsLen-1
-		pathToResolve := pathPkg.Join(resolvedPath, parts[ind])
+	for ind := 0; ind < pathPartsLen; ind++ {
+		isLastPathPart := ind == pathPartsLen-1
+		pathToResolve := pathPkg.Join(resolvedPath, pathParts[ind])
 
 		lsTreeEntry, err := repo.getCommitTreeEntry(ctx, commit, pathToResolve)
 		if err != nil {
@@ -381,7 +399,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, link, depth, checkFunc)
 			if err != nil {
-				return "", EntryNotFoundInRepoErr
+				return "", err
 			}
 
 			resolvedPath = resolvedTarget

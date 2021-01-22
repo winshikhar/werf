@@ -149,7 +149,7 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath
 		}
 	}
 
-	exist, err := r.isFileExist(relPath)
+	exist, err := r.isRegularFileExist(relPath)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (r FileReader) isConfigurationFileExistAnywhere(ctx context.Context, relPat
 	if exist, err := r.isCommitFileExist(ctx, relPath); err != nil {
 		return false, err
 	} else if !exist {
-		return r.isFileExist(relPath)
+		return r.isRegularFileExist(relPath)
 	} else {
 		return true, nil
 	}
@@ -209,7 +209,7 @@ func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string
 	}
 
 	if r.sharedContext.LooseGiterminism() || accepted {
-		return r.isFileExist(relPath)
+		return r.isRegularFileExist(relPath)
 	}
 
 	return r.isCommitFileExist(ctx, relPath)
@@ -217,6 +217,7 @@ func (r FileReader) isConfigurationFileExist(ctx context.Context, relPath string
 
 var skipReadingNotAcceptedFile = errors.New("skip reading not accepted file")
 var skipReadingFileInsideUninitializedSubmodule = errors.New("skip reading file inside uninitialized submodule")
+var skipNotAcceptedFile = errors.New("skip not accepted file") //TODO
 
 func (r FileReader) checkAndReadConfigurationFile(ctx context.Context, relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
 	data, err := r.checkAndReadFile(relPath, isFileAcceptedFunc)
