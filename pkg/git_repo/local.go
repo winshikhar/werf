@@ -404,6 +404,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
+			fmt.Println(commit, link, depth)
 			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, link, depth, checkFunc)
 			if err != nil {
 				return "", err
