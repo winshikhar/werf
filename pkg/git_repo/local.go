@@ -332,15 +332,15 @@ func (repo *Local) IsCommitDirectoryExist(ctx context.Context, commit, path stri
 
 // CheckAndResolveCommitFilePath does ResolveCommitFilePath with an additional check for each resolved path.
 func (repo *Local) CheckAndResolveCommitFilePath(ctx context.Context, commit, path string, checkFunc func(relPath string) error) (string, error) {
-	path, err := repo.resolveCommitFilePath(ctx, commit, path, 0, checkFunc)
-	fmt.Println("check and resolve", commit, path, err)
+	resolvedPath, err := repo.resolveCommitFilePath(ctx, commit, path, 0, checkFunc)
+	fmt.Printf("%q %q %q %q %q", "check and resolve", path, resolvedPath, commit, err)
 	return path, err
 }
 
 // ResolveCommitFilePath follows symbolic links and returns the resolved path if there is a corresponding tree entry in the repo.
 func (repo *Local) ResolveCommitFilePath(ctx context.Context, commit, path string) (string, error) {
-	path, err := repo.resolveCommitFilePath(ctx, commit, path, 0, nil)
-	fmt.Println("resolve", commit, path, err)
+	resolvedPath, err := repo.resolveCommitFilePath(ctx, commit, path, 0, nil)
+	fmt.Printf("%q %q %q %q %q", "resolve", path, resolvedPath, commit, err)
 	return path, err
 }
 
