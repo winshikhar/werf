@@ -25,18 +25,22 @@ func (r FileReader) checkAndReadCommitConfigurationFile(ctx context.Context, rel
 }
 
 func (r FileReader) checkCommitFilePath(ctx context.Context, relPath string) error {
-	if !r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
-		fileChanged, err := r.sharedContext.IsWorktreeFileModified(ctx, relPath)
-		if err != nil {
-			return err
+	_, err := r.sharedContext.LocalGitRepo().CheckAndResolveCommitFilePath(ctx, r.sharedContext.HeadCommit(), relPath, func(resolvedRelPath string) error {
+		if !r.sharedContext.IsFileInsideUninitializedSubmodule(resolvedRelPath) {
+			fileChanged, err := r.sharedContext.IsWorktreeFileModified(ctx, resolvedRelPath)
+			if err != nil {
+				return err
+			}
+
+			if fileChanged {
+				return NewUncommittedFilesChangesError(resolvedRelPath)
+			}
 		}
 
-		if fileChanged {
-			return NewUncommittedFilesChangesError(relPath)
-		}
-	}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
 func (r FileReader) readCommitFile(ctx context.Context, relPath string) ([]byte, error) {
