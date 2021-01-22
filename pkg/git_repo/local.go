@@ -341,6 +341,8 @@ func (repo *Local) ResolveCommitFilePath(ctx context.Context, commit, path strin
 }
 
 func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+	fmt.Println("resolve", commit, path)
+
 	if depth > 1000 {
 		return "", TooManyLevelsOfSymbolicLinksErr
 	}
