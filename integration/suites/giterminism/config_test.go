@@ -154,11 +154,7 @@ project: none
 				}
 
 				if e.commitSymlinks {
-					utils.RunSucceedCommand(
-						SuiteData.TestDirPath,
-						"git",
-						"commit", "-m", "Commit symlinks",
-					)
+					gitAddAndCommit("test")
 				}
 
 				output, err := utils.RunCommand(
