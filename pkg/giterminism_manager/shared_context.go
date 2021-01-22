@@ -40,7 +40,7 @@ func NewSharedContext(ctx context.Context, projectDir string, localGitRepo git_r
 
 	statusResult, err := localGitRepo.Status(ctx, path_matcher.NewSimplePathMatcher("", []string{}, true))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get status for the project git repository: %s", err)
 	}
 
 	c.statusResult = statusResult
