@@ -1,0 +1,14 @@
+configVersion: 1
+project: werf-werf
+---
+
+artifact: x
+from: artifact
+---
+image: alex
+fromArtifact: x
+mount:
+  - from: build_dir
+    to: /cache
+  - fromPath: a/b/c
+    to: /test
