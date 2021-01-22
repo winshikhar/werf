@@ -74,7 +74,7 @@ func (r FileReader) checkFilePath(relPath string, isFileAcceptedFunc func(relPat
 		return true, nil
 	}
 
-	_, err := r.resolveFilePath(relPath, 0, func(resolvedPath string) error {
+	_, err := r.ResolveFilePath(relPath, 0, func(resolvedPath string) error {
 		if r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
 			return skipReadingFileInsideUninitializedSubmodule
 		}
@@ -103,7 +103,7 @@ func (r FileReader) checkFilePath(relPath string, isFileAcceptedFunc func(relPat
 
 // readFile resolves symlinks and returns the file data.
 func (r FileReader) readFile(relPath string) ([]byte, error) {
-	resolvedRelPath, err := r.resolveFilePath(relPath, 0, nil)
+	resolvedRelPath, err := r.ResolveFilePath(relPath, 0, nil)
 	if err != nil {
 		absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
 		return nil, fmt.Errorf("unable to resolve file path %s: %s", absPath, err)
@@ -120,7 +120,7 @@ func (r FileReader) readFile(relPath string) ([]byte, error) {
 
 // isDirectoryExist resolves symlinks and returns true if the resolved file is a directory.
 func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
-	resolvedRelPath, err := r.resolveFilePath(relPath, 0, nil)
+	resolvedRelPath, err := r.ResolveFilePath(relPath, 0, nil)
 	if err != nil {
 		if err == FileNotFoundInProjectDirectoryErr {
 			return false, nil
@@ -141,7 +141,7 @@ func (r FileReader) isDirectoryExist(relPath string) (bool, error) {
 
 // isRegularFileExist resolves symlinks and returns true if the resolved file is a regular file.
 func (r FileReader) isRegularFileExist(relPath string) (bool, error) {
-	resolvedRelPath, err := r.resolveFilePath(relPath, 0, nil)
+	resolvedRelPath, err := r.ResolveFilePath(relPath, 0, nil)
 	if err != nil {
 		if err == FileNotFoundInProjectDirectoryErr {
 			return false, nil
@@ -165,9 +165,13 @@ var (
 	TooManyLevelsOfSymbolicLinksErr   = fmt.Errorf("too many levels of symbolic links")
 )
 
-func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
-	fmt.Println("resolve", relPath)
+func (r FileReader) ResolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+	path, err := r.resolveFilePath(relPath, depth, checkFunc)
+	fmt.Println("resolve", path, err)
+	return path, err
+}
 
+func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
 	if depth > 1000 {
 		return "", TooManyLevelsOfSymbolicLinksErr
 	}
@@ -226,7 +230,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 				return "", FileNotFoundInProjectDirectoryErr
 			}
 
-			resolvedTarget, err := r.resolveFilePath(resolvedLink, depth, checkFunc)
+			resolvedTarget, err := r.ResolveFilePath(resolvedLink, depth, checkFunc)
 			if err != nil {
 				return "", err
 			}
