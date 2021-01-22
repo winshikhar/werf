@@ -384,6 +384,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		mode := lsTreeEntry.Mode
 		switch {
 		case mode.IsMalformed():
+			fmt.Println("malformed")
 			return "", EntryNotFoundInRepoErr
 		case mode == filemode.Symlink:
 			data, err := repo.getCommitTreeEntryContent(ctx, commit, pathToResolve)
@@ -393,11 +394,13 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 			link := string(data)
 			if pathPkg.IsAbs(link) {
+				fmt.Println("absolute")
 				return "", EntryNotFoundInRepoErr
 			}
 
 			resolvedLink := pathPkg.Clean(pathPkg.Join(pathPkg.Dir(pathToResolve), link))
 			if resolvedLink == ".." || strings.HasPrefix(resolvedLink, "../") {
+				fmt.Println("outside directory")
 				return "", EntryNotFoundInRepoErr
 			}
 
@@ -408,6 +411,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 			resolvedPath = resolvedTarget
 		case mode.IsFile() && !isLastPathPart:
+			fmt.Println("broken path")
 			return "", EntryNotFoundInRepoErr
 		default:
 			resolvedPath = pathToResolve
