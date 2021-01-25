@@ -227,6 +227,8 @@ func (r FileReader) ResolveFilePath(relPath string) (string, error) {
 }
 
 func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+	fmt.Println(relPath, depth)
+
 	if depth > 1000 {
 		return "", TooManyLevelsOfSymbolicLinksErr
 	}
