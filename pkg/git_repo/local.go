@@ -522,6 +522,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
+			fmt.Println("RESOLVED_LINK", resolvedLink)
 			if checkFunc != nil {
 				if err := checkFunc(resolvedLink); err != nil {
 					return "", err
