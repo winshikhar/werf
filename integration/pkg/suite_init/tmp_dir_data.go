@@ -1,11 +1,8 @@
 package suite_init
 
 import (
-	"os"
-
+	"fmt"
 	"github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	"github.com/werf/werf/integration/pkg/utils"
 )
 
@@ -24,12 +21,13 @@ func SetupTmpDir(tmpDir, testDirPath *string) bool {
 	ginkgo.BeforeEach(func() {
 		*tmpDir = utils.GetTempDir()
 		*testDirPath = *tmpDir
+		fmt.Println(tmpDir)
 	})
 
-	ginkgo.AfterEach(func() {
-		err := os.RemoveAll(*tmpDir)
-		Ω(err).ShouldNot(HaveOccurred())
-	})
+	//ginkgo.AfterEach(func() {
+	//	err := os.RemoveAll(*tmpDir)
+	//	Ω(err).ShouldNot(HaveOccurred())
+	//})
 
 	return true
 }
