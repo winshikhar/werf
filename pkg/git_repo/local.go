@@ -497,7 +497,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		mode := lsTreeEntry.Mode
 		switch {
 		case mode.IsMalformed(): // broken symlink here
-			fmt.Println("malformed", mode.String())
+			fmt.Println("malformed", pathToResolve, mode.String())
 			return "", EntryNotFoundInRepoErr
 		case mode == filemode.Symlink:
 			data, err := repo.getCommitTreeEntryContent(ctx, commit, pathToResolve)
