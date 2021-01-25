@@ -247,6 +247,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 		}
 
 		if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
+			fmt.Println("!!!1")
 			if checkFunc != nil {
 				if err := checkFunc(relPath); err != nil {
 					return "", err
@@ -284,8 +285,6 @@ afterBlock:
 				return "", fmt.Errorf("unable to eval symlinks %s: %s", link, err)
 			}
 
-			fmt.Println(relPath, absPathToResolve, link)
-
 			resolvedLink := link
 			if !filepath.IsAbs(link) {
 				resolvedLink = filepath.Join(absPathToResolve, link)
@@ -308,6 +307,7 @@ afterBlock:
 		}
 	}
 
+	fmt.Println("!!!2")
 	if checkFunc != nil {
 		if err := checkFunc(resolvedPath); err != nil {
 			return "", err
