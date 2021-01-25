@@ -204,8 +204,25 @@ config:
 				expectedErrSubstring: `unable to read werf config: the file 'dir/werf.yaml' must be committed`,
 			}),
 			Entry("the symlink to the config file not committed", entry{
-				addConfigFile:        true,
-				commitConfigFile:     true,
+				addConfigFile:    true,
+				commitConfigFile: true,
+				addSymlinks: map[string]string{
+					"werf.yaml": "a",
+					"a":         configFilePath,
+				},
+				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
+			}),
+			Entry("the symlink to the config file not committed", entry{
+				addConfigFile:    true,
+				commitConfigFile: true,
+				addSymlinks: map[string]string{
+					"werf.yaml": "a",
+					"a":         configFilePath,
+				},
+				commitSymlinks: []string{"werf.yaml", "a"},
+				changeSymlinksAfterCommit: map[string]string{
+					"werf.yaml": configFilePath,
+				},
 				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
 			}),
 			Entry("[allow] the config file not committed", entry{
