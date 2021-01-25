@@ -499,7 +499,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 		mode := lsTreeEntry.Mode
 
-		fmt.Println("!!!!!!!!", mode.String())
+		fmt.Println("!!!!!!!!", mode.String(), path)
 
 		switch {
 		case mode.IsMalformed():
