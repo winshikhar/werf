@@ -484,6 +484,12 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		}
 	}
 
+	if checkFunc != nil {
+		if err := checkFunc(path); err != nil {
+			return "", err
+		}
+	}
+
 	pathParts := util.SplitFilepath(path)
 	pathPartsLen := len(pathParts)
 
@@ -519,12 +525,6 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
-			if checkFunc != nil {
-				if err := checkFunc(resolvedLink); err != nil {
-					return "", err
-				}
-			}
-
 			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, link, depth, checkFunc)
 			if err != nil {
 				return "", err
@@ -535,12 +535,6 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 			return "", EntryNotFoundInRepoErr
 		default:
 			resolvedPath = pathToResolve
-		}
-	}
-
-	if checkFunc != nil {
-		if err := checkFunc(resolvedPath); err != nil {
-			return "", err
 		}
 	}
 
