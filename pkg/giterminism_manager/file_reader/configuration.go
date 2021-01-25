@@ -161,6 +161,23 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath
 		if shouldReadFromFS {
 			return nil
 		} else {
+			_, err := r.ResolveAndCheckFilePath(relPath, func(resolvedPath string) error {
+				exist, err := r.sharedContext.LocalGitRepo().IsTreeEntryExist(ctx, r.sharedContext.HeadCommit(), resolvedPath)
+				if err != nil {
+					return err
+				}
+
+				if exist {
+					return nil
+				} else {
+					return NewUncommittedFilesError(relPath)
+				}
+			})
+
+			if err != nil {
+				return err
+			}
+
 			return NewUncommittedFilesError(relPath)
 		}
 	} else {
