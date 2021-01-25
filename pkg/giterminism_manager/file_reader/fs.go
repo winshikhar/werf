@@ -284,6 +284,8 @@ afterBlock:
 				return "", fmt.Errorf("unable to eval symlinks %s: %s", link, err)
 			}
 
+			fmt.Println(relPath, absPathToResolve, link)
+
 			resolvedLink := link
 			if !filepath.IsAbs(link) {
 				resolvedLink = filepath.Join(absPathToResolve, link)
