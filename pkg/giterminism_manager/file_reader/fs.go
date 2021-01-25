@@ -4,27 +4,81 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	pathPkg "path"
 	"path/filepath"
+	"strings"
+
+	"github.com/bmatcuk/doublestar"
 
 	"github.com/werf/werf/pkg/util"
 )
 
-// Glob returns the hash of regular files and their contents for the paths that are matched pattern
-// This function follows only symlinks pointed to a regular file (not to a directory)
-func (r FileReader) filesGlob(pattern string) ([]string, error) {
+func (r FileReader) walkFilesWithGlob(dir, glob string) ([]string, error) {
 	var result []string
-	err := util.WalkByPattern(r.sharedContext.ProjectDir(), pattern, func(path string, s os.FileInfo, err error) error {
+
+	glob = filepath.FromSlash(glob)
+	matchFunc := func(path string) (bool, error) {
+		for _, glob := range []string{
+			glob,
+			pathPkg.Join(glob, "**", "*"),
+		} {
+			matched, err := doublestar.PathMatch(glob, path)
+			if err != nil {
+				return false, err // TODO
+			}
+
+			if matched {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+
+	err := r.walkFiles(dir, func(notResolvedPath string) error {
+		matched, err := matchFunc(notResolvedPath)
+		if err != nil {
+			return fmt.Errorf("xxxx") // TODO
+		}
+
+		if matched {
+			result = append(result, notResolvedPath)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (r FileReader) walkFiles(relDir string, fileFunc func(notResolvedPath string) error) error {
+	exist, err := r.isDirectoryExist(relDir)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return nil
+	}
+
+	resolveDir, err := r.ResolveFilePath(relDir, 0)
+	if err != nil {
+		return fmt.Errorf("unable to resolve path %s", relDir)
+	}
+
+	absDirPath := filepath.Join(r.sharedContext.ProjectDir(), resolveDir)
+	return filepath.Walk(absDirPath, func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if s.IsDir() {
+		if f.IsDir() {
 			return nil
 		}
 
-		var filePath string
-		if s.Mode()&os.ModeSymlink == os.ModeSymlink {
-			link, err := filepath.EvalSymlinks(path)
+		notResolvedPath := util.GetRelativeToBaseFilepath(r.sharedContext.ProjectDir(), strings.Replace(path, resolveDir, relDir, 1))
+		if f.Mode()&os.ModeSymlink == os.ModeSymlink {
+			link, err := os.Readlink(path)
 			if err != nil {
 				return fmt.Errorf("eval symlink %s failed: %s", path, err)
 			}
@@ -35,29 +89,18 @@ func (r FileReader) filesGlob(pattern string) ([]string, error) {
 			}
 
 			if linkStat.IsDir() {
-				return nil
+				return r.walkFiles(notResolvedPath, fileFunc)
 			}
 
-			filePath = link
-		} else {
-			filePath = path
+			return fileFunc(notResolvedPath)
 		}
 
-		if util.IsSubpathOfBasePath(r.sharedContext.ProjectDir(), filePath) {
-			relPath := util.GetRelativeToBaseFilepath(r.sharedContext.ProjectDir(), filePath)
-			result = append(result, relPath)
-		} else {
-			return fmt.Errorf("unable to handle the file %s which is located outside the project directory", filePath)
-		}
-
-		return nil
+		return fileFunc(notResolvedPath)
 	})
-
-	return result, err
 }
 
 func (r FileReader) checkAndReadFile(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) ([]byte, error) {
-	accepted, err := r.checkFilePath(relPath, isFileAcceptedFunc)
+	resolvedPath, accepted, err := r.CheckAndResolveFilePath(relPath, isFileAcceptedFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -66,15 +109,15 @@ func (r FileReader) checkAndReadFile(relPath string, isFileAcceptedFunc func(rel
 		return nil, skipReadingNotAcceptedFile
 	}
 
-	return r.readFile(relPath)
+	return r.readFile(resolvedPath)
 }
 
-func (r FileReader) checkFilePath(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (bool, error) {
-	if r.sharedContext.LooseGiterminism() {
-		return true, nil
-	}
+func (r FileReader) CheckAndResolveFilePath(relPath string, isFileAcceptedFunc func(relPath string) (bool, error)) (string, bool, error) {
+	resolvedPath, err := r.checkAndResolveFilePath(relPath, 0, func(resolvedPath string) error {
+		if r.sharedContext.LooseGiterminism() {
+			return nil
+		}
 
-	_, err := r.CheckAndResolveFilePath(relPath, 0, func(resolvedPath string) error {
 		if r.sharedContext.IsFileInsideUninitializedSubmodule(relPath) {
 			return skipReadingFileInsideUninitializedSubmodule
 		}
@@ -92,13 +135,13 @@ func (r FileReader) checkFilePath(relPath string, isFileAcceptedFunc func(relPat
 	})
 	if err != nil {
 		if err == skipReadingFileInsideUninitializedSubmodule || err == skipNotAcceptedFile {
-			return false, nil
+			return resolvedPath, false, nil
 		}
 
-		return false, err
+		return "", false, err
 	}
 
-	return true, nil
+	return resolvedPath, true, nil
 }
 
 // readFile resolves symlinks and returns the file data.
@@ -165,7 +208,7 @@ var (
 	TooManyLevelsOfSymbolicLinksErr   = fmt.Errorf("too many levels of symbolic links")
 )
 
-func (r FileReader) CheckAndResolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
+func (r FileReader) checkAndResolveFilePath(relPath string, depth int, checkFunc func(resolvedPath string) error) (string, error) {
 	path, err := r.resolveFilePath(relPath, depth, checkFunc)
 	fmt.Printf("%q %q %q %q\n", "check and resolve", relPath, path, err)
 	return path, err

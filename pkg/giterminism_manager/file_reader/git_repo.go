@@ -2,10 +2,6 @@ package file_reader
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
-
-	"github.com/bmatcuk/doublestar"
 )
 
 func (r FileReader) isCommitFileExist(ctx context.Context, relPath string) (bool, error) {
@@ -47,23 +43,6 @@ func (r FileReader) readCommitFile(ctx context.Context, relPath string) ([]byte,
 	return r.sharedContext.LocalGitRepo().ReadCommitFile(ctx, r.sharedContext.HeadCommit(), relPath)
 }
 
-func (r FileReader) commitFilesGlob(ctx context.Context, pattern string) ([]string, error) {
-	var result []string
-
-	commitPathList, err := r.sharedContext.LocalGitRepo().GetCommitFilePathList(ctx, r.sharedContext.HeadCommit())
-	if err != nil {
-		return nil, fmt.Errorf("unable to get files list from local git repo: %s", err)
-	}
-
-	pattern = filepath.ToSlash(pattern)
-	for _, relFilepath := range commitPathList {
-		relPath := filepath.ToSlash(relFilepath)
-		if matched, err := doublestar.Match(pattern, relPath); err != nil {
-			return nil, err
-		} else if matched {
-			result = append(result, relPath)
-		}
-	}
-
-	return result, nil
+func (r FileReader) commitFilesGlob(ctx context.Context, dir string, pattern string) ([]string, error) {
+	return r.sharedContext.LocalGitRepo().WalkCommitFilesWithGlob(ctx, r.sharedContext.HeadCommit(), dir, pattern)
 }

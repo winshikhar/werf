@@ -70,16 +70,10 @@ func (r FileReader) loadChartDir(ctx context.Context, relDir string) ([]*chart.C
 		return nil, fmt.Errorf("the directory '%s' not found in the project git repository", relDir)
 	}
 
-	// TODO configurationFilesGlob method must resolve symlinks properly
-	relDir, err := r.resolveChartDirectory(relDir)
-	if err != nil {
-		return nil, err
-	}
-
-	pattern := filepath.Join(relDir, "**/*")
 	if err := r.configurationFilesGlob(
 		ctx,
-		pattern,
+		relDir,
+		"**/*",
 		r.giterminismConfig.IsUncommittedHelmFileAccepted,
 		func(relPath string, data []byte, err error) error {
 			if err != nil {

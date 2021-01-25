@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 )
 
-func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern string) (map[string]interface{}, error) {
+func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, glob string) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 
 	if err := r.configurationFilesGlob(
 		ctx,
-		pattern,
+		"",
+		glob,
 		r.giterminismConfig.IsUncommittedConfigGoTemplateRenderingFileAccepted,
 		func(relPath string, data []byte, err error) error {
 			if err != nil {
@@ -23,7 +24,7 @@ func (r FileReader) ConfigGoTemplateFilesGlob(ctx context.Context, pattern strin
 			return nil
 		},
 	); err != nil {
-		return nil, fmt.Errorf("{{ .Files.Glob '%s' }}: %s", pattern, err)
+		return nil, fmt.Errorf("{{ .Files.Glob '%s' }}: %s", glob, err)
 	}
 
 	return result, nil

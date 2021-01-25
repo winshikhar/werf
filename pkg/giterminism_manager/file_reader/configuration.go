@@ -3,10 +3,11 @@ package file_reader
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 )
 
-func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, isFileAcceptedFunc func(relPath string) (bool, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
+func (r FileReader) configurationFilesGlob(ctx context.Context, dir, glob string, isFileAcceptedFunc func(relPath string) (bool, error), handleFileFunc func(relPath string, data []byte, err error) error) error {
 	processedFiles := map[string]bool{}
 
 	isFileProcessedFunc := func(relPath string) bool {
@@ -27,10 +28,11 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 		return r.checkAndReadCommitConfigurationFile(ctx, relPath)
 	}
 
-	fileRelPathListFromFS, err := r.filesGlob(pattern)
+	fileRelPathListFromFS, err := r.walkFilesWithGlob(dir, glob)
 	if err != nil {
 		return err
 	}
+	fmt.Println("fs!!!!!!", fileRelPathListFromFS)
 
 	if r.sharedContext.LooseGiterminism() {
 		for _, relPath := range fileRelPathListFromFS {
@@ -43,10 +45,11 @@ func (r FileReader) configurationFilesGlob(ctx context.Context, pattern string, 
 		return nil
 	}
 
-	fileRelPathListFromCommit, err := r.commitFilesGlob(ctx, pattern)
+	fileRelPathListFromCommit, err := r.commitFilesGlob(ctx, dir, glob)
 	if err != nil {
 		return err
 	}
+	fmt.Println("commit!!!!!!", fileRelPathListFromCommit)
 
 	var relPathListWithUncommittedFilesChanges []string
 	for _, relPath := range fileRelPathListFromCommit {

@@ -187,7 +187,7 @@ func isPathMatched(patterns []string, p string) (bool, error) {
 		pattern = filepath.ToSlash(pattern)
 
 		matchFunc := func() (bool, error) {
-			exist, err := doublestar.PathMatch(pattern, p)
+			exist, err := doublestar.Match(pattern, p)
 			if err != nil {
 				return false, err
 			}
@@ -196,7 +196,7 @@ func isPathMatched(patterns []string, p string) (bool, error) {
 				return true, nil
 			}
 
-			return doublestar.PathMatch(path.Join(pattern, "**", "*"), p)
+			return doublestar.Match(path.Join(pattern, "**", "*"), p)
 		}
 
 		if matched, err := matchFunc(); err != nil {

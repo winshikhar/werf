@@ -3,6 +3,7 @@ package git_repo
 import (
 	"context"
 	"fmt"
+	"github.com/bmatcuk/doublestar"
 	pathPkg "path"
 	"path/filepath"
 	"strings"
@@ -257,8 +258,106 @@ func (repo *Local) getRepoWorkTreeCacheDir(repoID string) string {
 	return filepath.Join(GetWorkTreeCacheDir(), "local", repoID)
 }
 
-func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]string, error) {
-	result, err := repo.LsTree(ctx, path_matcher.NewGitMappingPathMatcher("", nil, nil, true), LsTreeOptions{
+func (repo *Local) WalkCommitFilesWithGlob(ctx context.Context, commit string, dir string, glob string) ([]string, error) {
+	glob = filepath.ToSlash(glob)
+	matchFunc := func(path string) (bool, error) {
+		for _, glob := range []string{
+			glob,
+			pathPkg.Join(glob, "**", "*"),
+		} {
+			matched, err := doublestar.Match(glob, path)
+			if err != nil {
+				return false, err // TODO
+			}
+
+			if matched {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	}
+
+	var result []string
+	if err := repo.WalkCommitFiles(ctx, commit, dir, func(notResolvedPath string) error {
+		matched, err := matchFunc(notResolvedPath)
+		if err != nil {
+			return err // TODO
+		}
+
+		if matched {
+			result = append(result, notResolvedPath)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (repo *Local) WalkCommitFiles(ctx context.Context, commit string, dir string, fileFunc func(notResolvedPath string) error) error {
+	exist, err := repo.IsCommitDirectoryExist(ctx, commit, dir)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return nil
+	}
+
+	resolvedDir, err := repo.ResolveCommitFilePath(ctx, commit, dir)
+	if err != nil {
+		return fmt.Errorf("unable to resolve commit file path %s: %s", dir, err)
+	}
+
+	result, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(resolvedDir, []string{}, true), LsTreeOptions{
+		Commit: commit,
+		Strict: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	return result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
+		notResolvedPath := strings.Replace(filepath.ToSlash(lsTreeEntry.FullFilepath), resolvedDir, dir, -1)
+
+		if lsTreeEntry.Mode.IsMalformed() { // TODO broken symlinks here
+			return fmt.Errorf("broken symlinks here")
+		} else if lsTreeEntry.Mode == filemode.Symlink {
+			isDir, err := repo.IsCommitDirectoryExist(ctx, commit, notResolvedPath)
+			if err != nil {
+				return fmt.Errorf("!!!!")
+			}
+
+			if isDir {
+				err := repo.WalkCommitFiles(ctx, commit, notResolvedPath, fileFunc)
+				if err != nil {
+					return err
+				}
+			} else {
+				if err := fileFunc(notResolvedPath); err != nil {
+					return err
+				}
+			}
+		} else {
+			if err := fileFunc(notResolvedPath); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string, dir string) ([]string, error) {
+	resolvedDir, err := repo.ResolveCommitFilePath(ctx, commit, dir)
+	if err != nil {
+		return nil, fmt.Errorf("unable to resolve commit file path %s: %s", dir, err)
+	}
+
+	result, err := repo.LsTree(ctx, path_matcher.NewGitMappingPathMatcher(resolvedDir, nil, nil, true), LsTreeOptions{
 		Commit: commit,
 		Strict: true,
 	})
@@ -268,7 +367,21 @@ func (repo *Local) GetCommitFilePathList(ctx context.Context, commit string) ([]
 
 	var res []string
 	if err := result.Walk(func(lsTreeEntry *ls_tree.LsTreeEntry) error {
-		res = append(res, lsTreeEntry.FullFilepath)
+		if lsTreeEntry.Mode.IsMalformed() { // TODO broken symlinks here
+
+		} else if lsTreeEntry.Mode == filemode.Symlink {
+			symlinkRes, err := repo.GetCommitFilePathList(ctx, commit, filepath.ToSlash(lsTreeEntry.FullFilepath))
+			if err != nil {
+				return err
+			}
+
+			for _, path := range symlinkRes {
+				res = append(res, strings.Replace(path, resolvedDir, dir, -1))
+			}
+		} else {
+			res = append(res, strings.Replace(lsTreeEntry.FullFilepath, resolvedDir, dir, -1))
+		}
+
 		return nil
 	}); err != nil {
 		return nil, err
@@ -287,7 +400,7 @@ func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]b
 	return repo.getCommitTreeEntryContent(ctx, commit, resolvedPath)
 }
 
-// IsCommitFileExist resolves symlinks and returns true if the resolved commit tree entry is Regular, Deprecated, Executable, or Link.
+// IsCommitFileExist resolves symlinks and returns true if the resolved commit tree entry is Regular, Deprecated, or Executable.
 func (repo *Local) IsCommitFileExist(ctx context.Context, commit, path string) (bool, error) {
 	resolvedPath, err := repo.ResolveCommitFilePath(ctx, commit, path)
 	if err != nil {
@@ -383,7 +496,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 
 		mode := lsTreeEntry.Mode
 		switch {
-		case mode.IsMalformed():
+		case mode.IsMalformed(): // broken symlink here
 			fmt.Println("malformed")
 			return "", EntryNotFoundInRepoErr
 		case mode == filemode.Symlink:
