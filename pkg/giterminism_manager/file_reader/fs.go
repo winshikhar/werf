@@ -246,16 +246,18 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 			return "", fmt.Errorf("unable to access file %s: %s", absPath, err)
 		}
 
-		if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
-			fmt.Println("!!!1")
-			if checkFunc != nil {
-				if err := checkFunc(relPath); err != nil {
-					return "", err
-				}
-			}
-
-			return relPath, nil
+		if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+			goto afterBlock
 		}
+
+		fmt.Println(stat.Mode().String(), relPath)
+		if checkFunc != nil {
+			if err := checkFunc(relPath); err != nil {
+				return "", err
+			}
+		}
+
+		return relPath, nil
 	}
 
 afterBlock:
@@ -307,7 +309,6 @@ afterBlock:
 		}
 	}
 
-	fmt.Println("!!!2")
 	if checkFunc != nil {
 		if err := checkFunc(resolvedPath); err != nil {
 			return "", err
