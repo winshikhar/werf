@@ -83,9 +83,19 @@ func (c *sharedContext) IsWorktreeFileModified(ctx context.Context, relPath stri
 
 	// https://github.com/go-git/go-git/issues/227
 	if changed && runtime.GOOS == "windows" {
-		commitFileData, err := c.localGitRepo.ReadCommitFile(ctx, c.headCommit, relPath)
+		exist, err := c.localGitRepo.IsTreeEntryExist(ctx, c.headCommit, relPath)
 		if err != nil {
 			return false, err
+		}
+
+		var commitFileData []byte
+		if exist {
+			data, err := c.localGitRepo.ReadCommitTreeEntryContent(ctx, c.headCommit, relPath)
+			if err != nil {
+				return false, err
+			}
+
+			commitFileData = data
 		}
 
 		isDataIdentical, err := compareGitRepoFileWithProjectFile(c.projectDir, relPath, commitFileData)
