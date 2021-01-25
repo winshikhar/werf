@@ -12,3 +12,5 @@ mount:
     to: /cache
   - fromPath: a/b/c
     to: /test
+---
+{{ .Files.Glob ".werf/*" }}
