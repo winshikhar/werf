@@ -397,7 +397,7 @@ func (repo *Local) ReadCommitFile(ctx context.Context, commit, path string) ([]b
 		return nil, fmt.Errorf("unable to resolve commit file path %s: %s", path, err)
 	}
 
-	return repo.getCommitTreeEntryContent(ctx, commit, resolvedPath)
+	return repo.ReadCommitTreeEntryContent(ctx, commit, resolvedPath)
 }
 
 // IsCommitFileExist resolves symlinks and returns true if the resolved commit tree entry is Regular, Deprecated, or Executable.
@@ -443,8 +443,8 @@ func (repo *Local) IsCommitDirectoryExist(ctx context.Context, commit, path stri
 	}
 }
 
-// CheckAndResolveCommitFilePath does ResolveCommitFilePath with an additional check for each resolved path.
-func (repo *Local) CheckAndResolveCommitFilePath(ctx context.Context, commit, path string, checkFunc func(relPath string) error) (string, error) {
+// ResolveAndCheckCommitFilePath does ResolveCommitFilePath with an additional check for each resolved path.
+func (repo *Local) ResolveAndCheckCommitFilePath(ctx context.Context, commit, path string, checkFunc func(relPath string) error) (string, error) {
 	resolvedPath, err := repo.resolveCommitFilePath(ctx, commit, path, 0, checkFunc)
 	fmt.Printf("%q %q %q %q %q\n", "check and resolve", path, resolvedPath, commit, err)
 	return resolvedPath, err
@@ -500,7 +500,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 			fmt.Println("malformed", pathToResolve, mode.String())
 			return "", EntryNotFoundInRepoErr
 		case mode == filemode.Symlink:
-			data, err := repo.getCommitTreeEntryContent(ctx, commit, pathToResolve)
+			data, err := repo.ReadCommitTreeEntryContent(ctx, commit, pathToResolve)
 			if err != nil {
 				return "", fmt.Errorf("unable to get commit tree entry content %s: %s", pathToResolve, err)
 			}
@@ -541,7 +541,7 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 	return resolvedPath, nil
 }
 
-func (repo *Local) getCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
+func (repo *Local) ReadCommitTreeEntryContent(ctx context.Context, commit, relPath string) ([]byte, error) {
 	lsTreeResult, err := repo.LsTree(ctx, path_matcher.NewSimplePathMatcher(relPath, []string{}, false), LsTreeOptions{
 		Commit: commit,
 		Strict: true,
@@ -551,6 +551,15 @@ func (repo *Local) getCommitTreeEntryContent(ctx context.Context, commit, relPat
 	}
 
 	return lsTreeResult.LsTreeEntryContent(relPath)
+}
+
+func (repo *Local) IsTreeEntryExist(ctx context.Context, commit, relPath string) (bool, error) {
+	entry, err := repo.getCommitTreeEntry(ctx, commit, relPath)
+	if err != nil {
+		return false, err
+	}
+
+	return !entry.Mode.IsMalformed(), nil
 }
 
 func (repo *Local) getCommitTreeEntry(ctx context.Context, commit, path string) (*ls_tree.LsTreeEntry, error) {
