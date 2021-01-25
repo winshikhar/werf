@@ -235,21 +235,27 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 	// returns path if the corresponding file is File or Directory.
 	{
 		absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
-		exist, err := util.FileExists(absPath)
+		stat, err := os.Stat(absPath)
 		if err != nil {
-			return "", fmt.Errorf("unable to check existence of file %s: %s", absPath, err)
-		}
-
-		if checkFunc != nil {
-			if err := checkFunc(relPath); err != nil {
-				return "", err
+			if os.IsNotExist(err) || util.IsNotADirectoryError(err) {
+				goto afterBlock
 			}
+
+			return "", fmt.Errorf("unable to access file %s: %s", absPath, err)
 		}
 
-		if exist {
+		if stat.Mode()&os.ModeSymlink != os.ModeSymlink {
+			if checkFunc != nil {
+				if err := checkFunc(relPath); err != nil {
+					return "", err
+				}
+			}
+
 			return relPath, nil
 		}
 	}
+
+afterBlock:
 
 	pathParts := util.SplitFilepath(relPath)
 	pathPartsLen := len(pathParts)
