@@ -21,7 +21,7 @@ func SetupTmpDir(tmpDir, testDirPath *string) bool {
 	ginkgo.BeforeEach(func() {
 		*tmpDir = utils.GetTempDir()
 		*testDirPath = *tmpDir
-		fmt.Println(tmpDir)
+		fmt.Println(*tmpDir)
 	})
 
 	//ginkgo.AfterEach(func() {
