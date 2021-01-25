@@ -16,6 +16,11 @@ var _ = Describe("config", func() {
 		gitAddAndCommit("werf-giterminism.yaml")
 	})
 
+	const minimalConfigContent = `
+configVersion: 1
+project: none
+---
+`
 	{
 		type entry struct {
 			allowUncommitted        bool
@@ -41,11 +46,7 @@ config:
 				gitAddAndCommit("werf-giterminism.yaml")
 
 				if e.addConfig {
-					fileCreateOrAppend("werf.yaml", `
-configVersion: 1
-project: none
----
-`)
+					fileCreateOrAppend("werf.yaml", minimalConfigContent)
 				}
 
 				if e.commitConfig {
@@ -99,12 +100,16 @@ project: none
 	}
 
 	{
+		configFilePath := "dir/werf.yaml"
+
 		type entry struct {
-			allowUncommitted         bool
-			addSymlinks              bool
-			commitSymlinks           bool
-			changeSymlinkAfterCommit bool
-			expectedErrSubstring     string
+			allowUncommitted          bool
+			addConfigFile             bool
+			commitConfigFile          bool
+			addSymlinks               map[string]string
+			commitSymlinks            []string
+			changeSymlinksAfterCommit map[string]string
+			expectedErrSubstring      string
 		}
 
 		createSymlinkFile := func(relPath string, link string) {
@@ -129,9 +134,15 @@ project: none
 				"git",
 				"checkout", relPath,
 			)
+
+			utils.RunSucceedCommand(
+				SuiteData.TestDirPath,
+				"git",
+				"rm", "--cached", relPath,
+			)
 		}
 
-		DescribeTable("config.allowUncommitted xxxxxxxxxxxxxx",
+		DescribeTable("config.allowUncommitted (symlink)",
 			func(e entry) {
 				if e.allowUncommitted && runtime.GOOS == "windows" {
 					Skip("skip on windows")
@@ -150,17 +161,24 @@ config:
 				fileCreateOrAppend("werf-giterminism.yaml", contentToAppend)
 				gitAddAndCommit("werf-giterminism.yaml")
 
-				if e.addSymlinks {
-					fileCreateOrAppend("test", `
-configVersion: 1
-project: none
----
-`)
-					createSymlinkFile("werf.yaml", "test")
+				if e.addConfigFile {
+					fileCreateOrAppend(configFilePath, minimalConfigContent)
 				}
 
-				if e.commitSymlinks {
-					gitAddAndCommit("test")
+				if e.commitConfigFile {
+					gitAddAndCommit(configFilePath)
+				}
+
+				for path, link := range e.addSymlinks {
+					createSymlinkFile(path, link)
+				}
+
+				for _, path := range e.commitSymlinks {
+					gitAddAndCommit(path)
+				}
+
+				for path, link := range e.changeSymlinksAfterCommit {
+					createSymlinkFile(path, link)
 				}
 
 				output, err := utils.RunCommand(
@@ -176,17 +194,29 @@ project: none
 					Ω(err).ShouldNot(HaveOccurred())
 				}
 			},
-			Entry("werf.yaml not committed", entry{
-				addSymlinks:          true,
+			Entry("the config file not committed", entry{
+				addConfigFile:        true,
+				addSymlinks:          map[string]string{"werf.yaml": configFilePath},
+				commitSymlinks:       []string{"werf.yaml"},
+				expectedErrSubstring: `unable to read werf config: the file 'dir/werf.yaml' must be committed`,
+			}),
+			Entry("the symlink to the config file not committed", entry{
+				addConfigFile:        true,
+				commitConfigFile:     true,
+				addSymlinks:          map[string]string{"werf.yaml": configFilePath},
 				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
 			}),
-			Entry("werf.yaml allow uncommitted", entry{
+			Entry("[allow] the config file not committed", entry{
 				allowUncommitted: true,
-				addSymlinks:      true,
+				addConfigFile:    true,
+				addSymlinks:      map[string]string{"werf.yaml": configFilePath},
+				commitSymlinks:   []string{"werf.yaml"},
 			}),
-			Entry("werf.yaml committed", entry{
-				addSymlinks:    true,
-				commitSymlinks: true,
+			Entry("[allow] the symlink to the config file not committed", entry{
+				allowUncommitted: true,
+				addConfigFile:    true,
+				commitConfigFile: true,
+				addSymlinks:      map[string]string{"werf.yaml": configFilePath},
 			}),
 		)
 	}
