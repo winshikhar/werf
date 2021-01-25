@@ -244,6 +244,13 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 			return "", fmt.Errorf("unable to access file %s: %s", absPath, err)
 		}
 
+		link, err := os.Readlink(absPath)
+		if err != nil {
+			return "", err
+		}
+
+		fmt.Println(link)
+
 		if lstat.Mode()&os.ModeSymlink == os.ModeSymlink {
 			fmt.Println("!!!!!!!!!1", absPath)
 			goto afterBlock
