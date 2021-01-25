@@ -245,10 +245,10 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 		}
 
 		if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
-			fmt.Println("!!!!!!!!!1")
+			fmt.Println("!!!!!!!!!1", absPath)
 			goto afterBlock
 		} else {
-			fmt.Println("!!!!!!!!!2")
+			fmt.Println("!!!!!!!!!2", absPath)
 		}
 
 		if checkFunc != nil {
