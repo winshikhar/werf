@@ -517,7 +517,12 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
-			fmt.Println(commit, link, depth)
+			if checkFunc != nil {
+				if err := checkFunc(resolvedLink); err != nil {
+					return "", err
+				}
+			}
+
 			resolvedTarget, err := repo.resolveCommitFilePath(ctx, commit, link, depth, checkFunc)
 			if err != nil {
 				return "", err
