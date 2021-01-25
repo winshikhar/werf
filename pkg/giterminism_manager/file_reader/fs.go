@@ -235,7 +235,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 	// returns path if the corresponding file is File or Directory.
 	{
 		absPath := filepath.Join(r.sharedContext.ProjectDir(), relPath)
-		stat, err := os.Stat(absPath)
+		lstat, err := os.Lstat(absPath)
 		if err != nil {
 			if os.IsNotExist(err) || util.IsNotADirectoryError(err) {
 				goto afterBlock
@@ -244,7 +244,7 @@ func (r FileReader) resolveFilePath(relPath string, depth int, checkFunc func(re
 			return "", fmt.Errorf("unable to access file %s: %s", absPath, err)
 		}
 
-		if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		if lstat.Mode()&os.ModeSymlink == os.ModeSymlink {
 			fmt.Println("!!!!!!!!!1", absPath)
 			goto afterBlock
 		} else {
