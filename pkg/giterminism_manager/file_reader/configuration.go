@@ -162,7 +162,7 @@ func (r FileReader) checkConfigurationFileExistence(ctx context.Context, relPath
 			return nil
 		} else {
 			_, err := r.ResolveAndCheckFilePath(relPath, func(resolvedPath string) error {
-				fmt.Println(resolvedPath)
+				fmt.Println("!!!!!!!!!", resolvedPath)
 
 				exist, err := r.sharedContext.LocalGitRepo().IsTreeEntryExist(ctx, r.sharedContext.HeadCommit(), resolvedPath)
 				if err != nil {
