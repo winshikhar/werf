@@ -498,9 +498,6 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 		}
 
 		mode := lsTreeEntry.Mode
-
-		fmt.Println("!!!!!!!!", mode.String(), path)
-
 		switch {
 		case mode.IsMalformed():
 			return "", EntryNotFoundInRepoErr
@@ -522,7 +519,6 @@ func (repo *Local) resolveCommitFilePath(ctx context.Context, commit, path strin
 				return "", EntryNotFoundInRepoErr
 			}
 
-			fmt.Println("RESOLVED_LINK", resolvedLink, checkFunc)
 			if checkFunc != nil {
 				if err := checkFunc(resolvedLink); err != nil {
 					return "", err
