@@ -160,7 +160,7 @@ func isFileStatusAccepted(fileStatus *git.FileStatus, options FilterOptions) boo
 }
 
 func isFileStatusCodeExpected(code git.StatusCode) bool {
-	return !(code == git.Unmodified || code == git.Untracked)
+	return code != git.Unmodified
 }
 
 func (r *Result) UninitializedSubmodulePathList() []string {
