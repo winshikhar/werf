@@ -194,7 +194,7 @@ config:
 					Ω(err).ShouldNot(HaveOccurred())
 				}
 			},
-			XEntry("the config file not committed", entry{ // broken link
+			Entry("the config file not committed", entry{ // broken link
 				addConfigFile: true,
 				addSymlinks: map[string]string{
 					"werf.yaml": "a",
@@ -223,7 +223,7 @@ config:
 				changeSymlinksAfterCommit: map[string]string{
 					"werf.yaml": configFilePath,
 				},
-				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
+				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' changes must be committed`,
 			}),
 			Entry("[allow] the config file not committed", entry{
 				allowUncommitted: true,
