@@ -559,6 +559,8 @@ func (repo *Local) IsTreeEntryExist(ctx context.Context, commit, relPath string)
 		return false, err
 	}
 
+	fmt.Println(relPath, entry.Mode.String())
+
 	return !entry.Mode.IsMalformed(), nil
 }
 
