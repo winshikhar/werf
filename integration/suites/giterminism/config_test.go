@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/werf/werf/integration/pkg/utils"
+	"runtime"
 )
 
 var _ = Describe("config", func() {
@@ -99,10 +100,11 @@ project: none
 
 	{
 		type entry struct {
-			allowUncommitted     bool
-			addSymlinks          bool
-			commitSymlinks       bool
-			expectedErrSubstring string
+			allowUncommitted         bool
+			addSymlinks              bool
+			commitSymlinks           bool
+			changeSymlinkAfterCommit bool
+			expectedErrSubstring     string
 		}
 
 		createSymlinkFile := func(relPath string, link string) {
@@ -131,6 +133,10 @@ project: none
 
 		DescribeTable("config.allowUncommitted xxxxxxxxxxxxxx",
 			func(e entry) {
+				if e.allowUncommitted && runtime.GOOS == "windows" {
+					Skip("skip on windows")
+				}
+
 				var contentToAppend string
 				if e.allowUncommitted {
 					contentToAppend = `
@@ -173,6 +179,10 @@ project: none
 			Entry("werf.yaml not committed", entry{
 				addSymlinks:          true,
 				expectedErrSubstring: `unable to read werf config: the file 'werf.yaml' must be committed`,
+			}),
+			Entry("werf.yaml allow uncommitted", entry{
+				allowUncommitted: true,
+				addSymlinks:      true,
 			}),
 			Entry("werf.yaml committed", entry{
 				addSymlinks:    true,
